@@ -1,0 +1,15 @@
+# Backend Local Ignore
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.so
+*.log
+logs/
+.cache/
+.paddlex/
+temp/
+tmp/
+*.tmp
+.DS_Store
