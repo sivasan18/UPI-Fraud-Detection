@@ -62,3 +62,4 @@ Thumbs.db
 *.log
 logs/
 backend/logs/
+*.zip
