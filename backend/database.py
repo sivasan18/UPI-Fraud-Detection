@@ -63,9 +63,25 @@ def init_db():
         risk_type TEXT,
         risk_factors TEXT,                 -- JSON string
         recommendation TEXT,
+        remarks TEXT,
+        payment_mode TEXT,
+        autopay_mandate TEXT,
+        expected_recurring_amount REAL,
         created_at TEXT NOT NULL
     );
     """)
+
+    # Safe schema migration for existing databases
+    for col_def in [
+        "remarks TEXT",
+        "payment_mode TEXT",
+        "autopay_mandate TEXT",
+        "expected_recurring_amount REAL"
+    ]:
+        try:
+            cursor.execute(f"ALTER TABLE transactions ADD COLUMN {col_def}")
+        except Exception:
+            pass
 
     # 3. Alerts table
     cursor.execute("""
@@ -182,8 +198,9 @@ def insert_transaction(txn: Dict[str, Any], mode: str = "ACTIVE") -> Dict[str, A
         id, transaction_id, mode, amount, date, date_iso, time, hour, minute,
         sender, sender_upi, receiver, receiver_upi, status, merchant, category,
         location, device, source_type, validated, risk_score, risk_level,
-        risk_type, risk_factors, recommendation, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        risk_type, risk_factors, recommendation, remarks, payment_mode, autopay_mandate,
+        expected_recurring_amount, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         txn_id,
         txn.get("transaction_id") or txn.get("transactionId") or txn_id,
@@ -210,6 +227,10 @@ def insert_transaction(txn: Dict[str, Any], mode: str = "ACTIVE") -> Dict[str, A
         txn.get("risk_type") or txn.get("riskType"),
         factors_json,
         txn.get("recommendation"),
+        str(txn.get("remarks") or txn.get("notes") or ""),
+        str(txn.get("payment_mode") or txn.get("paymentMode") or ""),
+        str(txn.get("autopay_mandate") or txn.get("autopayMandate") or ""),
+        float(txn.get("expected_recurring_amount") or txn.get("expectedRecurringAmount") or 0),
         created_at
     ))
 

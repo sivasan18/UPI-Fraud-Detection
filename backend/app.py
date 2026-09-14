@@ -11,7 +11,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import database
-from ocr_service import process_image_ocr, process_statement
+from ocr_service import process_image_ocr, process_statement, _PROJECT_MODELS_DIR, get_paddle_ocr
 from risk_engine import evaluate_transaction_risk, get_risk_level
 from profile_engine import build_behaviour_profile
 
@@ -23,6 +23,22 @@ CORS(app)
 
 # Initialize SQLite database on startup
 database.init_db()
+
+# ── Pre-warm OCR engine on startup ─────────────────────────────────────────
+# This ensures the OCR model is loaded and verified before the first request.
+# Any initialization failure is immediately visible in the startup log.
+_ocr_ready = False
+_ocr_startup_error = None
+try:
+    print(f"[Startup] Pre-warming PaddleOCR engine from: {_PROJECT_MODELS_DIR}", flush=True)
+    get_paddle_ocr()
+    _ocr_ready = True
+    print("[Startup] PaddleOCR engine is ready.", flush=True)
+except Exception as _ocr_err:
+    _ocr_startup_error = str(_ocr_err)
+    print(f"[Startup ERROR] OCR engine failed to initialize: {_ocr_startup_error}", flush=True)
+    print(f"[Startup ERROR] Fix: run  backend/venv/bin/python3 backend/download_models.py", flush=True)
+# ── End OCR pre-warm ────────────────────────────────────────────────────────
 
 # Helper to verify demo mode accessibility
 def check_demo_access(mode: str):
@@ -40,7 +56,10 @@ def health():
         "system": "UPI Fraud Detection and Risk Assessment System",
         "timestamp": datetime.now().isoformat(),
         "database": "SQLite (Localhost)",
-        "demoModeEnabled": database.is_demo_mode_enabled()
+        "demoModeEnabled": database.is_demo_mode_enabled(),
+        "ocr_ready": _ocr_ready,
+        "ocr_model_dir": _PROJECT_MODELS_DIR,
+        "ocr_error": _ocr_startup_error
     })
 
 # ------------------------------------------------------------------------------
@@ -290,7 +309,16 @@ def analyze_transaction():
         return jsonify({"detail": "Demo Mode has been permanently removed."}), 403
 
     profile = build_behaviour_profile(mode)
-    recent = database.get_transactions(mode=mode, limit=10)
+    recent = database.get_transactions(mode=mode, limit=15)
+
+    # If analysing an existing transaction from history, exclude self to prevent false self-matching
+    txn_id = data.get("id")
+    raw_tid = data.get("transaction_id") or data.get("transactionId")
+    if txn_id or raw_tid:
+        recent = [
+            t for t in recent
+            if (not txn_id or t.get("id") != txn_id) and (not raw_tid or t.get("transaction_id") != raw_tid)
+        ]
 
     result = evaluate_transaction_risk(data, profile, recent)
     return jsonify({

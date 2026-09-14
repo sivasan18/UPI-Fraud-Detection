@@ -42,10 +42,10 @@ const WORKFLOW_STEPS = [
   },
   {
     step: 5,
-    label: 'ANALYSE',
-    icon: <Search size={20} color="#3b82f6" />,
-    desc: 'Risk engine checks 12 behavioral patterns against your history',
-    color: '#3b82f6',
+    label: 'FRAUD ENGINE',
+    icon: <Search size={20} color="var(--pink-light)" />,
+    desc: 'Risk engine checks 13 behavioral patterns against your history',
+    color: 'var(--pink-primary)',
   },
   {
     step: 6,
@@ -164,6 +164,15 @@ const PATTERNS = [
     desc: 'Current amount is 3× or more than your recent session average — sudden escalation signal.',
     contrib: 20,
     color: '#ef4444',
+  },
+  {
+    id: 'P13',
+    name: 'Small Initial Payment + Unexpected AutoPay/Recurring Debit',
+    icon: <RefreshCw size={15} />,
+    example: 'Example: A user makes a small ₹1 payment, but an AutoPay/mandate may result in a much larger recurring debit such as ₹399 or ₹599 later. The system checks whether the transaction data shows this suspicious relationship.',
+    desc: 'The system does not treat the ₹1 payment alone as fraud; it looks for supporting AutoPay/mandate or subsequent-debit indicators such as unexpected recurring debit setups of ₹399/₹599.',
+    contrib: 30,
+    color: '#ec4899',
   },
 ];
 
@@ -314,12 +323,12 @@ export default function Tutorial() {
         </div>
       </div>
 
-      {/* ── SECTION 3: 12 Fraud Patterns ── */}
+      {/* ── SECTION 3: 13 Fraud Patterns ── */}
       <div className="card mb-6">
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
             <ShieldAlert size={18} color="var(--pink-light)" />
-            12 Fraud Detection Patterns
+            13 Fraud Detection Patterns
           </div>
           <div className="text-xs text-tertiary">Click any pattern to see details</div>
         </div>

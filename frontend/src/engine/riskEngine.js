@@ -71,7 +71,12 @@ export function analyseTransaction(transaction, profile, recentTransactions = []
   factors.push(locationFactor);
   totalScore += locationFactor.contribution;
 
-  // 10. Combined Risk Multiplier
+  // 10. Pattern 13 — Small Initial Payment + Unexpected AutoPay/Recurring Debit
+  const autopayFactor = checkAutoPayMandate(transaction, recentTransactions);
+  factors.push(autopayFactor);
+  totalScore += autopayFactor.contribution;
+
+  // 11. Combined Risk Multiplier
   const activeFacts = factors.filter(f => f.contribution > 0);
   if (activeFacts.length >= 3) {
     const combinedBonus = Math.min(Math.floor(activeFacts.length * 2.5), 15);
@@ -350,6 +355,73 @@ function checkLocationAnomaly(txn, profile, recentTransactions) {
     contribution: 8,
     description: `Transaction from ${txn.location}, usual location is ${usualLocation}`,
     severity: 'medium',
+  };
+}
+
+function checkAutoPayMandate(txn, recentTransactions = []) {
+  const amount = parseFloat(txn.amount || 0);
+  const receiver = (txn.receiver || txn.merchant || '').toLowerCase();
+  const remarks = (txn.remarks || txn.notes || '').toLowerCase();
+  const paymentMode = (txn.payment_mode || txn.paymentMode || '').toLowerCase();
+  const autopay = (txn.autopay_mandate || txn.autopayMandate || '').toLowerCase();
+  const expectedRecurring = parseFloat(txn.expected_recurring_amount || txn.expectedRecurringAmount || 0);
+
+  const textCorpus = `${remarks} ${paymentMode} ${autopay} ${receiver}`;
+  const keywords = ['autopay', 'mandate', 'recurring', 'subscription', 'e-mandate', 'standing instruction', 'auto-debit', 'auto debit'];
+  const hasKeyword = keywords.some(k => textCorpus.includes(k)) || (autopay && !['none', 'no', 'false', '0'].includes(autopay));
+
+  if (amount <= 10 && amount > 0) {
+    if (hasKeyword || expectedRecurring > 0) {
+      return {
+        name: 'Pattern 13 — Deceptive AutoPay/Mandate Setup',
+        pattern: 'P13',
+        contribution: 30,
+        description: `Small initial payment of ₹${amount} with unexpected AutoPay/recurring debit setup (${expectedRecurring ? '₹' + expectedRecurring : 'recurring mandate'}).`,
+        severity: 'high',
+      };
+    }
+    const subsequentLarge = recentTransactions.find(t =>
+      (t.receiver || '').toLowerCase() === receiver && parseFloat(t.amount || 0) >= 100
+    );
+    if (subsequentLarge) {
+      return {
+        name: 'Pattern 13 — Deceptive AutoPay/Mandate Setup',
+        pattern: 'P13',
+        contribution: 30,
+        description: `Small token payment (₹${amount}) to '${txn.receiver}' linked to subsequent debit of ₹${parseFloat(subsequentLarge.amount).toLocaleString()}.`,
+        severity: 'high',
+      };
+    }
+    return {
+      name: 'Small Amount Verification',
+      pattern: 'P13',
+      contribution: 0,
+      description: `Small payment of ₹${amount} with no AutoPay/recurring mandate detected. (Not classified as fraud).`,
+      severity: 'low',
+    };
+  }
+
+  if (amount >= 100) {
+    const earlierSmall = recentTransactions.find(t =>
+      (t.receiver || '').toLowerCase() === receiver && parseFloat(t.amount || 0) <= 10 && parseFloat(t.amount || 0) > 0
+    );
+    if (earlierSmall) {
+      return {
+        name: 'Pattern 13 — Deceptive AutoPay/Mandate Setup',
+        pattern: 'P13',
+        contribution: 28,
+        description: `Subsequent debit of ₹${amount.toLocaleString()} to '${txn.receiver}' following prior small token payment of ₹${earlierSmall.amount}.`,
+        severity: 'high',
+      };
+    }
+  }
+
+  return {
+    name: 'AutoPay / Mandate Check',
+    pattern: 'P13',
+    contribution: 0,
+    description: 'No deceptive AutoPay/recurring mandate pattern detected.',
+    severity: 'low',
   };
 }
 

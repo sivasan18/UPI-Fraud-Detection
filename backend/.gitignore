@@ -13,3 +13,7 @@ temp/
 tmp/
 *.tmp
 .DS_Store
+
+# PaddleOCR model files (auto-downloaded by start.sh on first run)
+# Do NOT commit model binaries to git (176MB+)
+models/

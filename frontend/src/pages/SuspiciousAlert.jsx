@@ -6,7 +6,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldAlert, AlertTriangle, ArrowLeft, ArrowRight,
-  Lock, CheckCircle, Info, PhoneCall
+  Lock, CheckCircle, Info, PhoneCall, AlertCircle, ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -101,6 +101,83 @@ export default function SuspiciousAlert() {
             <div className="text-xs text-tertiary">Time & Date</div>
             <div className="font-mono text-xs text-secondary mt-1">{txn.date} • {txn.time}</div>
           </div>
+        </div>
+      </div>
+
+      {/* Detected Suspicious Patterns */}
+      <div className="card mb-6" style={{ border: '1px solid #ef4444' }}>
+        <div className="card-header">
+          <div className="card-title flex items-center gap-2 text-danger">
+            <AlertTriangle size={18} color="#ef4444" />
+            <span>Detected Suspicious / Fraud Patterns ({(analysis.detected_patterns_details || []).length})</span>
+          </div>
+          <span className="badge badge-critical">Active Risk</span>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {(analysis.detected_patterns_details || []).map((item, idx) => (
+            <div
+              key={idx}
+              className="p-3"
+              style={{
+                background: 'rgba(239,68,68,0.08)',
+                borderRadius: 8,
+                borderLeft: '4px solid #ef4444',
+              }}
+            >
+              <div className="flex justify-between items-center mb-1">
+                <div className="font-bold text-xs text-pink flex items-center gap-2">
+                  <AlertCircle size={14} color="#ef4444" />
+                  <span>{item.name}</span>
+                </div>
+                <span className="badge badge-high text-xs">+{item.contribution} Risk Score</span>
+              </div>
+              <div className="text-xs text-secondary leading-relaxed pl-5">
+                {item.description}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Patterns Checked / Not Detected (Never Hidden) */}
+      <div className="card mb-6">
+        <div className="card-header pb-2">
+          <div className="card-title flex items-center gap-2">
+            <ShieldCheck size={18} color="var(--risk-low)" />
+            <span>Patterns Checked / Not Detected ({(analysis.not_detected_patterns || []).length} of 13)</span>
+          </div>
+          <span className="badge badge-secondary">All 13 Evaluated</span>
+        </div>
+        <p className="text-xs text-tertiary mb-3">
+          All 13 configured fraud and suspicion patterns were evaluated. The following patterns were checked but not found in this transaction:
+        </p>
+
+        <div className="flex flex-col gap-2">
+          {(analysis.not_detected_patterns || []).map((pat, idx) => (
+            <div
+              key={idx}
+              className="p-3 flex items-start justify-between gap-3"
+              style={{
+                background: 'var(--bg-card-subtle)',
+                borderRadius: 8,
+                borderLeft: pat.status?.includes('Insufficient') ? '3px solid #f59e0b' : '3px solid rgba(16,185,129,0.3)',
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle size={14} color={pat.status?.includes('Insufficient') ? '#f59e0b' : '#10b981'} />
+                  <span className="font-semibold text-xs text-secondary">{pat.name}</span>
+                  <span className={`badge ${pat.status?.includes('Insufficient') ? 'badge-medium' : 'badge-low'}`} style={{ fontSize: '0.65rem' }}>
+                    {pat.status || 'Not Detected'}
+                  </span>
+                </div>
+                <div className="text-xs text-tertiary leading-relaxed pl-5">
+                  {pat.reason}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

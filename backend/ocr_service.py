@@ -3,29 +3,66 @@
 # Local PaddleOCR Engine & App-Specific Region/Field Extraction Pipeline
 # Supported Apps: BHIM, PhonePe, Google Pay
 # ==============================================================================
+
+# ── PERSISTENCE FIX: Set project-local model cache BEFORE any paddle imports ──
+# This ensures PaddleOCR always finds its models in backend/models/paddlex/
+# regardless of the current working directory, shell session, or system restart.
+import os as _os
+_OCR_SERVICE_DIR = _os.path.dirname(_os.path.abspath(__file__))
+_PROJECT_MODELS_DIR = _os.path.join(_OCR_SERVICE_DIR, "models", "paddlex")
+_os.makedirs(_PROJECT_MODELS_DIR, exist_ok=True)
+_os.environ["PADDLE_PDX_CACHE_HOME"] = _PROJECT_MODELS_DIR
+# ── End persistence fix ────────────────────────────────────────────────────────
+
 import re
 import os
 import io
 import csv
+import sys
 import tempfile
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 from PIL import Image, ImageEnhance, ImageOps
 
-# Singleton PaddleOCR instance
+# Singleton PaddleOCR instance (initialized once at first use)
 _paddle_ocr_instance = None
+_paddle_ocr_init_error = None  # Stores actual error if initialization failed
 
 
 def get_paddle_ocr():
-    """Initializes and caches the local PaddleOCR instance."""
-    global _paddle_ocr_instance
-    if _paddle_ocr_instance is None:
-        from paddleocr import PaddleOCR
-        # PaddleOCR 3.x configuration for CPU localhost
-        _paddle_ocr_instance = PaddleOCR(
-            use_textline_orientation=True,
-            lang="en"
+    """
+    Initializes and caches the local PaddleOCR instance.
+    Uses project-local model directory set via PADDLE_PDX_CACHE_HOME.
+    Raises RuntimeError with the actual failure reason if init fails.
+    """
+    global _paddle_ocr_instance, _paddle_ocr_init_error
+
+    # If already failed before, don't retry endlessly — surface the error
+    if _paddle_ocr_init_error is not None:
+        raise RuntimeError(
+            f"PaddleOCR failed to initialize on startup: {_paddle_ocr_init_error}\n"
+            f"Run: backend/venv/bin/python3 backend/download_models.py"
         )
+
+    if _paddle_ocr_instance is None:
+        try:
+            from paddleocr import PaddleOCR
+            print(f"[OCR] Initializing PaddleOCR from: {_PROJECT_MODELS_DIR}", flush=True)
+            _paddle_ocr_instance = PaddleOCR(
+                use_textline_orientation=True,
+                lang="en"
+            )
+            print("[OCR] PaddleOCR ready.", flush=True)
+        except Exception as e:
+            _paddle_ocr_init_error = str(e)
+            print(f"[OCR ERROR] PaddleOCR initialization failed: {e}", flush=True)
+            print(f"[OCR ERROR] Model dir: {_PROJECT_MODELS_DIR}", flush=True)
+            print(f"[OCR ERROR] Fix: run  backend/venv/bin/python3 backend/download_models.py", flush=True)
+            raise RuntimeError(
+                f"PaddleOCR failed to initialize: {e}\n"
+                f"Model directory: {_PROJECT_MODELS_DIR}\n"
+                f"Fix: run  backend/venv/bin/python3 backend/download_models.py"
+            )
     return _paddle_ocr_instance
 
 
@@ -829,7 +866,13 @@ def process_image_ocr(file_bytes: bytes, filename: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        print(f"[OCR Error] PaddleOCR extraction error: {e}")
+        import traceback
+        error_detail = str(e)
+        print(f"[OCR Error] PaddleOCR extraction error: {error_detail}", flush=True)
+        traceback.print_exc()
+        hint = ""
+        if "initialize" in error_detail.lower() or "model" in error_detail.lower() or "download" in error_detail.lower():
+            hint = " Run: backend/venv/bin/python3 backend/download_models.py"
         return {
             "amount": None,
             "date": datetime.now().strftime("%d %b %Y"),
@@ -839,7 +882,7 @@ def process_image_ocr(file_bytes: bytes, filename: str) -> Dict[str, Any]:
             "receiver_upi": "",
             "transaction_id": "",
             "status": "Successful",
-            "confidence": 30,
+            "confidence": 0,
             "field_confidences": {
                 "amount": "Uncertain",
                 "recipient": "Uncertain",
@@ -853,7 +896,8 @@ def process_image_ocr(file_bytes: bytes, filename: str) -> Dict[str, Any]:
             "detected_app_display": "Unknown App",
             "ocr_engine": "PaddleOCR (Local)",
             "needs_manual_entry": True,
-            "ocr_note": f"OCR processing encountered an issue: {str(e)[:100]}. Please enter manually."
+            "ocr_error_detail": error_detail[:300],
+            "ocr_note": f"OCR failed: {error_detail[:200]}.{hint} Please enter transaction details manually."
         }
     finally:
         if temp_path and os.path.exists(temp_path):
