@@ -6,101 +6,124 @@
 
 ## 🌟 Project Overview
 
-**UPI Fraud Detection and Risk Assessment System** is a simple, clean, and elegant academic prototype designed for undergraduate project demonstration and viva evaluation.
+**UPI Fraud Detection and Risk Assessment System** is a clean, explainable academic cybersecurity prototype for analyzing UPI transactions against user behavioural baselines.
 
-The system evaluates UPI transactions against historical user behaviour, checks for simple fraud indicators (such as unusual amounts, new recipients, and rapid repeated transactions), calculates a clear risk score (0–100), and provides actionable safety recommendations.
+The system features:
+1. **Local App-Aware OCR Engine (PaddleOCR)**: Automatically detects whether a transaction screenshot is from **BHIM**, **PhonePe**, or **Google Pay**, and extracts amount, recipient, transaction ID / UTR, date/time, UPI ID, bank account, and remarks using layout-specific region rules.
+2. **12 Behavioral Fraud Patterns (P1–P12)**: Explains exact behavioral indicators (rapid bursts, repeated same-amount transactions, amount deviations, new recipients, etc.).
+3. **Transparent Explainability (XAI)**: Generates human-readable "Why?" explanations and actionable safety recommendations.
+4. **Active Mode vs Demo Mode Isolation**: Permanent Active Mode with real local SQLite persistence, plus an isolated password-protected (`admin123`) Demo Mode for academic evaluations.
 
-### 5-Step Project Workflow
+---
+
+## 🔄 End-to-End Workflow
+
 ```
-UPLOAD (Screenshot / Manual)
+Upload Screenshot
    ↓
-EXTRACT (Local OCR / Regex)
+Detect App (BHIM / PhonePe / Google Pay)
    ↓
-VERIFY (Human-in-the-Loop Confirmation)
+PaddleOCR Reads Text & Bounding Boxes
    ↓
-ANALYSE (6 Simple Fraud Indicators + Baseline Comparison)
+App-Specific Region/Field Mapping
    ↓
-RESULT (Risk Score 0–100 + Why? + What Next?)
+Data Validation & Confidence Scoring
+   ↓
+User Verification & Confirmation
+   ↓
+Transaction Saved to Local SQLite
+   ↓
+Fraud Risk & Behavioral Pattern Analysis
 ```
 
 ---
 
-## 💻 Simple Technology Stack
+## 💻 Technology Stack
 
-- **Frontend**: React + JSX + CSS (Clean Black + Pink Theme)
-- **Backend**: Python + Flask (REST API on `localhost:8000`)
-- **Database**: Embedded SQLite (`fraud_detection.db`)
-- **Machine Learning & Stats**: scikit-learn, pandas, numpy
-- **OCR Engine**: Tesseract OCR (with reliable regex fallback)
+- **Frontend**: React 19 + Vite (Cybersecurity Black + Pink theme)
+- **Backend**: Python 3.9+ with Flask (REST API on `localhost:8000`)
+- **Database**: Embedded SQLite (`backend/fraud_detection.db`)
+- **OCR Engine**: PaddleOCR (100% Local Inference, no cloud APIs)
+- **Analytics**: pandas, scikit-learn, numpy
 
-> **Zero Cloud Dependencies**: 100% localhost operation. No Firebase, AWS, MongoDB, or Supabase.
-
----
-
-## 🎨 Visual Design
-
-- **Theme**: Fixed **Black + Pink** student-project style (no light/dark switch).
-- **Main Header**: "UPI Fraud Detection System"
-- **Browser Title**: "UPI Fraud Detection & Risk Assessment System"
-- **Cards & Layout**: Simple cards, tables, and forms with zero clutter.
+> **Zero Cloud Dependencies**: 100% localhost operation. No Firebase, AWS, MongoDB, or external cloud services.
 
 ---
 
-## 🔒 Dual Mode System
+## 🚀 One-Click Setup & Launch
 
-1. **ACTIVE MODE (Default)**:
-   - Starts with `0 Transactions` (clean state).
-   - Stores real/manual user transaction entries in local SQLite.
-2. **DEMO MODE (Temporary Academic Sandbox)**:
-   - For showing sample scenarios to the professor.
-   - Switch with Administrator Password: `admin123`.
-   - Clearly marked with `DEMO MODE` and `Synthetic data for project demonstration.`
-3. **REMOVE DEMO MODE**:
-   - Available in Settings $\rightarrow$ Remove Demo Mode.
-   - Requires password `admin123` $\rightarrow$ confirmation dialog $\rightarrow$ purges demo partition, sets `DEMO_MODE_ENABLED=false`.
-   - **Never deletes or affects Active Mode data**.
+Clone the repository and run the self-bootstrapping launcher:
 
----
-
-## 📊 Risk Score Classification (0–100)
-
-- **0–29**: **LOW RISK** — "Transaction appears consistent with available history. Proceed only if you recognize it."
-- **30–59**: **MEDIUM RISK** — "Review the transaction and verify the recipient."
-- **60–79**: **HIGH RISK** — "Verify the transaction before proceeding."
-- **80–100**: **CRITICAL RISK** — "Do not proceed with an unfamiliar transaction. Verify independently."
-
----
-
-## 🚀 How to Run on Localhost
-
-### 1. One-Click Startup Script
 ```bash
+git clone https://github.com/sivasan18/UPI-Fraud-Detection.git
+cd UPI-Fraud-Detection
+chmod +x start.sh
 ./start.sh
 ```
 
-### 2. Manual Startup
+`./start.sh` will automatically:
+1. Create `backend/venv` and install all dependencies from `requirements.txt`.
+2. Install frontend packages with `npm install` if not present.
+3. Start the Flask backend on `http://localhost:8000`.
+4. Start the React frontend on `http://localhost:5173`.
 
-**Terminal 1 — Flask Backend:**
+---
+
+## 🛠️ Manual Installation (Alternative)
+
+### Backend Setup:
 ```bash
 cd backend
-./venv/bin/python3 app.py
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
 ```
 
-**Terminal 2 — React Frontend:**
+### Frontend Setup:
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-Open your browser at: **`http://localhost:5173`**
+Visit: **`http://localhost:5173`**
+
+---
+
+## 📁 Project Structure
+
+```
+├── .gitignore                     # Git rules (excludes venv, node_modules, temp files)
+├── README.md                      # Project documentation and setup guide
+├── start.sh                       # One-click startup & dependency bootstrapper
+├── backend/
+│   ├── app.py                     # Flask REST API endpoints
+│   ├── database.py                # SQLite database management
+│   ├── ocr_service.py             # PaddleOCR engine & app-specific extractors
+│   ├── risk_engine.py             # 12-pattern behavioural fraud detection engine
+│   ├── profile_engine.py          # User spending baseline profiling
+│   ├── requirements.txt           # Python backend dependencies
+│   ├── fraud_detection.db         # Local SQLite database
+│   └── reference_samples/         # Ground-truth layout reference screenshots
+│       ├── bhim/bhim_sample.jpg
+│       ├── phonepe/phonepe_sample.jpg
+│       └── googlepay/googlepay_sample.jpg
+└── frontend/
+    ├── package.json               # Frontend dependencies
+    ├── vite.config.js             # Vite development server config
+    └── src/
+        ├── context/AppContext.jsx # Application state & Active/Demo mode logic
+        ├── pages/                 # React UI pages (Upload, OCR, Analysis, History, etc.)
+        └── components/            # Reusable UI components & layouts
+```
 
 ---
 
 ## 🔐 Administrator Password
-- Mode Switching & Demo Removal Password: **`admin123`** (all lowercase, no spaces).
+- Administrator password for switching to Demo Mode and removing Demo data: **`admin123`**
 
 ---
 
 ## ⚠️ Academic Disclaimer
-> *This project is an academic prototype for UPI transaction risk assessment. It does not access bank accounts, initiate payments, or guarantee that a transaction is safe or fraudulent.*
-# upi-fraud-detection-v-version
+*This project is an academic research prototype developed for B.Tech CSE final-year evaluation. It operates strictly locally on user-submitted or synthetic transaction records and does not connect to real banking networks or payment gateways.*
