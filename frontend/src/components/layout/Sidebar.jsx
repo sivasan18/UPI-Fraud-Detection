@@ -79,7 +79,7 @@ const DEMO_NAV_SECTIONS = [
 ];
 
 export default function Sidebar({ isCollapsed, onClose }) {
-  const { currentMode, databaseBackend, alerts } = useApp();
+  const { currentMode, alerts } = useApp();
   const activeAlerts = alerts.filter((a) => a.status === 'active').length;
 
   const sections = currentMode === 'ACTIVE' ? ACTIVE_NAV_SECTIONS : DEMO_NAV_SECTIONS;
@@ -140,37 +140,7 @@ export default function Sidebar({ isCollapsed, onClose }) {
         ))}
       </nav>
 
-      <div className="sidebar-footer">
-        {/* Mode Indicator */}
-        <div
-          className="sidebar-status"
-          style={{
-            marginBottom: '6px',
-            background: currentMode === 'ACTIVE' ? 'rgba(250, 204, 21, 0.08)' : 'rgba(250, 204, 21, 0.12)',
-            borderRadius: '6px',
-            padding: '4px 8px',
-          }}
-        >
-          <span
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: '#facc15',
-              display: 'inline-block',
-            }}
-          />
-          <span style={{ fontWeight: 600, color: '#facc15' }}>
-            {currentMode === 'ACTIVE' ? 'ACTIVE MODE' : 'DEMO MODE'}
-          </span>
-        </div>
-
-        {/* Database backend */}
-        <div className="sidebar-status">
-          <span className="status-dot online" />
-          <span>{databaseBackend || 'Supabase PostgreSQL'}</span>
-        </div>
-      </div>
+      {/* Footer status labels removed to keep sidebar uncluttered while preserving mode & storage functionality */}
     </aside>
   );
 }
