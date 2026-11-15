@@ -268,7 +268,7 @@ export default function Tutorial() {
           </div>
         </div>
         <p className="text-sm text-secondary mb-4">
-          The system uses high-precision local <strong>PaddleOCR</strong> with app recognition rather than generic full-page text scraping. Different UPI apps have completely unique visual layouts:
+          The system uses high-precision client-side <strong>Tesseract.js WASM OCR</strong> with layout recognition rather than generic full-page text scraping. Different UPI apps have completely unique visual layouts:
         </p>
 
         <div className="grid grid-3 mb-4" style={{ gap: 14 }}>

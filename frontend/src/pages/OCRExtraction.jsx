@@ -174,7 +174,7 @@ export default function OCRExtraction() {
     <div className="animate-fade-in" style={{ maxWidth: 940, margin: '0 auto', paddingBottom: '2.5rem' }}>
       <div className="page-header text-center">
         <h1>{step < 4 ? 'Recognizing UPI App & Extracting Data…' : 'Extracted Transaction Fields'}</h1>
-        <p>Local PaddleOCR engine performs app recognition and layout-specific region field extraction.</p>
+        <p>Browser-based Tesseract.js WASM engine performs app recognition and layout-specific region field extraction.</p>
       </div>
 
       {/* Progress Step Pipeline */}

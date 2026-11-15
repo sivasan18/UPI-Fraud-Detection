@@ -243,7 +243,11 @@ export const api = {
 
     if (isSupabaseConfigured()) {
       // Upsert transaction
-      await supabase.from('transactions').upsert(fullTxn);
+      const { error: txnErr } = await supabase.from('transactions').upsert(fullTxn);
+      if (txnErr) {
+        console.error('[Supabase] Failed to save transaction:', txnErr);
+        throw new Error(`Database error saving transaction: ${txnErr.message}`);
+      }
 
       // Insert analysis record
       const analysisRecord = {
@@ -263,11 +267,14 @@ export const api = {
         recommendation: analysis.recommendation,
         created_at: new Date().toISOString(),
       };
-      await supabase.from('fraud_analyses').insert(analysisRecord);
+      const { error: faErr } = await supabase.from('fraud_analyses').insert(analysisRecord);
+      if (faErr) {
+        console.warn('[Supabase] Fraud analysis insert notice:', faErr.message);
+      }
 
       // Create alert if high risk
       if (analysis.score >= 60) {
-        await supabase.from('alerts').insert({
+        const { error: altErr } = await supabase.from('alerts').insert({
           id: `ALT_${Date.now()}`,
           mode,
           transaction_id: cleanId,
@@ -278,6 +285,9 @@ export const api = {
           status: 'active',
           created_at: new Date().toISOString(),
         });
+        if (altErr) {
+          console.warn('[Supabase] Alert insert notice:', altErr.message);
+        }
       }
     } else {
       // Local fallback

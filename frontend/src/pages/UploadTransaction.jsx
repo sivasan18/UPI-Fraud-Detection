@@ -58,6 +58,33 @@ export default function UploadTransaction() {
     setUploadError('');
     setStatementPreview([]);
     setStatementVerified(false);
+
+    if (!file) {
+      setUploadError('Please select a file to upload.');
+      return;
+    }
+
+    // 1. File size validation (Max 16MB)
+    const MAX_SIZE = 16 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      setUploadError('File size exceeds 16MB. Please upload a smaller file.');
+      return;
+    }
+
+    // 2. Format validation
+    if (activeTab === 'screenshot') {
+      const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+      const fileExt = file.name?.split('.').pop()?.toLowerCase();
+      const validExtensions = ['png', 'jpg', 'jpeg', 'webp'];
+      const isMimeValid = file.type && allowedImageTypes.includes(file.type.toLowerCase());
+      const isExtValid = fileExt && validExtensions.includes(fileExt);
+
+      if (!isMimeValid && !isExtValid) {
+        setUploadError('Unsupported image format. Please upload a PNG, JPG, or WebP screenshot.');
+        return;
+      }
+    }
+
     setIsUploading(true);
 
     try {
@@ -82,12 +109,14 @@ export default function UploadTransaction() {
           }
         }
       } else {
-        setUploadError('The upload could not be processed.');
+        setUploadError('The upload could not be processed. Please try another file.');
       }
     } catch (err) {
-      setUploadError(
-        err?.response?.data?.detail || 'Upload failed. Check the file and backend connection.'
-      );
+      console.error('[UploadTransaction] OCR / Upload Error:', err);
+      const friendlyMessage =
+        err?.message ||
+        (typeof err === 'string' ? err : 'OCR extraction failed. Please ensure the screenshot is clear and try again.');
+      setUploadError(friendlyMessage);
     } finally {
       setIsUploading(false);
     }
@@ -214,7 +243,7 @@ export default function UploadTransaction() {
           </div>
 
           <div className="flex justify-between items-center mt-6 flex-wrap gap-3">
-            <span className="text-xs text-tertiary">Max file size: 16MB • PaddleOCR</span>
+            <span className="text-xs text-tertiary">Max file size: 16MB • Tesseract.js WASM OCR</span>
           </div>
         </div>
       )}

@@ -8,11 +8,10 @@ import {
 } from 'lucide-react';
 
 const TECH_STACK = [
-  { name: 'React + JSX', desc: 'Simple, responsive client interface', icon: Code, color: '#facc15' },
-  { name: 'Python Flask', desc: 'Lightweight REST API backend', icon: Cpu, color: '#facc15' },
-  { name: 'SQLite / Supabase PostgreSQL', desc: 'Local storage or server-side cloud database', icon: Database, color: '#facc15' },
-  { name: 'PaddleOCR', desc: 'Temporary screenshot text extraction', icon: FileText, color: '#facc15' },
-  { name: '13-Pattern Rule Engine', desc: 'Explainable transaction risk scoring', icon: Search, color: '#facc15' },
+  { name: 'React + Vite', desc: 'Simple, responsive client interface', icon: Code, color: '#facc15' },
+  { name: 'Supabase PostgreSQL & Auth', desc: 'Direct client-side cloud database & multi-admin auth', icon: Database, color: '#facc15' },
+  { name: 'Tesseract.js WASM', desc: 'In-browser client-side screenshot text extraction', icon: FileText, color: '#facc15' },
+  { name: '13-Pattern Rule Engine', desc: 'Explainable transaction risk scoring & adaptive profile', icon: Search, color: '#facc15' },
 ];
 
 export default function AboutProject() {

@@ -616,14 +616,52 @@ function calculateFieldConfidences(extracted, words = [], meanOcrConfidence = 80
 }
 
 /**
+ * Initializes the Tesseract.js worker with dual-strategy resiliency:
+ * 1. Primary: Same-origin bundled assets in /public/tesseract/ (fast, offline, zero CSP issues)
+ * 2. Secondary fallback: CDN-backed worker (fully whitelisted in Vercel CSP)
+ */
+async function initTesseractWorker(onProgress = null) {
+  const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+  const progressLogger = typeof onProgress === 'function' ? onProgress : () => {};
+
+  if (isBrowser) {
+    try {
+      const localWorker = await createWorker('eng', 1, {
+        workerPath: '/tesseract/worker.min.js',
+        corePath: '/tesseract/tesseract-core-simd-lstm.wasm.js',
+        langPath: '/tesseract',
+        gzip: true,
+        logger: progressLogger,
+      });
+      return localWorker;
+    } catch (localErr) {
+      console.warn('[OCR Engine] Local Tesseract asset load notice, falling back to CDN:', localErr);
+    }
+  }
+
+  try {
+    const worker = await createWorker('eng', 1, {
+      logger: progressLogger,
+    });
+    return worker;
+  } catch (err) {
+    console.error('[OCR Engine] Tesseract initialization error:', err);
+    throw new Error('OCR engine initialization failed. Please check your browser connection or refresh the page.');
+  }
+}
+
+/**
  * Main OCR execution pipeline.
  * Accepts File, Blob, or URL, preprocesses via HTML5 Canvas, configures Tesseract worker,
  * identifies layout, parses fields, and validates confidence scores.
  */
-export async function processImageOCR(imageFile, _onProgress = null) {
-  const preprocessed = await preprocessImage(imageFile);
+export async function processImageOCR(imageFile, onProgress = null) {
+  if (!imageFile) {
+    throw new Error('No screenshot file provided for OCR extraction.');
+  }
 
-  const worker = await createWorker('eng');
+  const preprocessed = await preprocessImage(imageFile);
+  const worker = await initTesseractWorker(onProgress);
 
   try {
     // Initial pass with PSM 11 (SPARSE_TEXT)
