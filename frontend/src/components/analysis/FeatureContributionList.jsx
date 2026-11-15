@@ -23,7 +23,7 @@ export default function FeatureContributionList({ factors = [] }) {
         else if (contribution >= 6) barColor = 'var(--risk-medium)';
 
         return (
-          <div key={i} className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+          <div key={i} className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="flex justify-between items-center text-xs mb-1.5">
               <span className="font-semibold text-secondary">{factor.name}</span>
               <span className="font-mono font-bold" style={{ color: barColor }}>

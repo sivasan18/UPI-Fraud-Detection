@@ -1,6 +1,6 @@
 // ==============================================================================
 // Fraud Detection and Risk Assessment System
-// Alerts Page (Live SQLite Alerts & Review Management)
+// Alerts Page (Live Alert & Review Management)
 // ==============================================================================
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -124,7 +124,7 @@ export default function Alerts() {
                 </span>
               </div>
 
-              <h4 className="text-base font-semibold mb-2" style={{ color: '#fff' }}>
+              <h4 className="text-base font-semibold mb-2" style={{ color: '#ffffff' }}>
                 {alert.message}
               </h4>
 

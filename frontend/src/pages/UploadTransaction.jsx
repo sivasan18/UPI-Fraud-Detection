@@ -16,22 +16,19 @@ export default function UploadTransaction() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [statementPreview, setStatementPreview] = useState([]);
+  const [statementVerified, setStatementVerified] = useState(false);
 
   // Manual Form State with all required fields
   const [formData, setFormData] = useState({
-    amount: '4000',
-    date: new Date().toISOString().split('T')[0],
-    time: '10:42 AM',
-    sender: 'Demo User',
-    sender_upi: 'demouser@upi',
-    receiver: 'ABC STORES',
-    receiver_upi: 'abcstores@upi',
-    transaction_id: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
-    status: 'Successful',
-    merchant: 'ABC STORES',
-    category: 'Shopping',
-    location: 'Chennai',
-    device: 'Samsung Galaxy S23',
+    amount: '',
+    date: '',
+    time: '',
+    receiver: '',
+    receiver_upi: '',
+    transaction_id: '',
+    category: '',
+    device: '',
   });
 
   const handleDrag = (e) => {
@@ -59,6 +56,8 @@ export default function UploadTransaction() {
   const handleFileSelect = async (file) => {
     setSelectedFile(file);
     setUploadError('');
+    setStatementPreview([]);
+    setStatementVerified(false);
     setIsUploading(true);
 
     try {
@@ -71,71 +70,67 @@ export default function UploadTransaction() {
       if (res && res.success) {
         if (activeTab === 'screenshot') {
           setOCRResult({
-            file,
             fileName: file.name,
             extracted: res.extracted,
           });
           navigate('/extraction');
         } else {
-          // Statement batch confirmation
-          if (res.transactions && res.transactions.length > 0) {
-            await api.batchConfirmTransactions(res.transactions, currentMode);
-            await refreshData(currentMode);
-            navigate('/history');
+          if (!res.transactions?.length) {
+            setUploadError('No transaction rows were found in this statement.');
+          } else {
+            setStatementPreview(res.transactions);
           }
         }
       } else {
-        fallbackMockOCR(file);
+        setUploadError('The upload could not be processed.');
       }
     } catch (err) {
-      console.warn('Direct upload fallback:', err);
-      fallbackMockOCR(file);
+      setUploadError(
+        err?.response?.data?.detail || 'Upload failed. Check the file and backend connection.'
+      );
     } finally {
       setIsUploading(false);
     }
   };
 
-  const fallbackMockOCR = (file) => {
-    const mockExtracted = {
-      amount: 4000.0,
-      date: '24 Aug 2026',
-      date_iso: '2026-08-24',
-      time: '10:42 AM',
-      receiver: 'ABC Stores',
-      receiver_upi: 'abcstores@upi',
-      transaction_id: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
-      status: 'Successful',
-      confidence: 92,
-      raw_text: 'Paid to ABC Stores ₹4,000. UPI ID: abcstores@upi',
-    };
+  const updateStatementField = (index, field, value) => {
+    setStatementPreview((rows) => rows.map((row, rowIndex) => (
+      rowIndex === index ? { ...row, [field]: value } : row
+    )));
+    setStatementVerified(false);
+  };
 
-    setOCRResult({
-      file,
-      fileName: file.name,
-      extracted: mockExtracted,
-    });
-    navigate('/extraction');
+  const saveVerifiedStatement = async () => {
+    setUploadError('');
+    setIsUploading(true);
+    try {
+      const verifiedRows = statementPreview.map((row) => ({
+        ...row,
+        amount: Number(row.amount),
+      }));
+      await api.batchConfirmTransactions(verifiedRows, currentMode);
+      await refreshData(currentMode);
+      setStatementPreview([]);
+      setStatementVerified(false);
+      navigate('/history');
+    } catch (error) {
+      setUploadError(error?.response?.data?.detail || 'Could not save the reviewed statement.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleManualSubmit = (e) => {
     e.preventDefault();
     const txn = {
-      id: `manual-${Date.now()}`,
       amount: parseFloat(formData.amount) || 0,
       date: formData.date,
       date_iso: formData.date,
       time: formData.time,
-      hour: parseInt(formData.time.split(':')[0]) || 12,
-      minute: 0,
-      sender: formData.sender,
-      sender_upi: formData.sender_upi,
       receiver: formData.receiver,
       receiver_upi: formData.receiver_upi,
       transaction_id: formData.transaction_id,
-      status: formData.status,
-      merchant: formData.merchant,
       category: formData.category,
-      location: formData.location,
       device: formData.device,
       source_type: 'manual',
       validated: false,
@@ -156,7 +151,7 @@ export default function UploadTransaction() {
       <div className="notice-box privacy mb-6">
         <ShieldAlert size={18} style={{ flexShrink: 0, marginTop: 2 }} />
         <div>
-          <strong>Privacy Notice:</strong> All transaction extraction and evaluation occurs locally on localhost. This academic prototype never accesses your bank account or transmits data externally.
+          <strong>Privacy:</strong> Screenshots are processed temporarily and saved only after you verify the extracted details.
         </div>
       </div>
 
@@ -196,7 +191,7 @@ export default function UploadTransaction() {
         <div className="card animate-fade-in">
           <div className="card-header">
             <div className="card-title">Upload UPI Transaction Screenshot</div>
-            <span className="badge badge-violet">PNG, JPG, JPEG, WEBP</span>
+            <span className="badge badge-pink">PNG, JPG, JPEG, WEBP</span>
           </div>
 
           <div
@@ -219,13 +214,7 @@ export default function UploadTransaction() {
           </div>
 
           <div className="flex justify-between items-center mt-6 flex-wrap gap-3">
-            <span className="text-xs text-tertiary">Max file size: 15MB • Local Optical Character Recognition (OCR)</span>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => handleFileSelect(new File([''], 'gpay_receipt_sample.png', { type: 'image/png' }))}
-            >
-              Test with Sample Screenshot
-            </button>
+            <span className="text-xs text-tertiary">Max file size: 16MB • PaddleOCR</span>
           </div>
         </div>
       )}
@@ -235,7 +224,7 @@ export default function UploadTransaction() {
         <div className="card animate-fade-in">
           <div className="card-header">
             <div className="card-title">Upload Account or Passbook Statement</div>
-            <span className="badge badge-violet">PDF, CSV, XLSX</span>
+            <span className="badge badge-pink">PDF, CSV, XLSX</span>
           </div>
 
           <div
@@ -245,7 +234,7 @@ export default function UploadTransaction() {
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            <input type="file" accept=".pdf, .csv, .xlsx, .xls" onChange={handleFileInput} />
+            <input type="file" accept=".pdf, .csv, .xlsx" onChange={handleFileInput} />
             <div className="upload-icon">
               {isUploading ? <Loader2 className="animate-spin" size={28} /> : <FileText size={28} />}
             </div>
@@ -253,17 +242,85 @@ export default function UploadTransaction() {
               {selectedFile ? selectedFile.name : 'Drag & drop transaction passbook statement file here'}
             </div>
             <div className="upload-hint">
-              Parses batch transaction logs and builds historical baseline in local SQLite
+              Review extracted rows before saving transaction details
             </div>
           </div>
 
           <div className="flex justify-between items-center mt-6 flex-wrap gap-3">
-            <span className="text-xs text-tertiary">Max file size: 30MB • Structured document parser</span>
+            <span className="text-xs text-tertiary">Max file size: 16MB • PDF, CSV, XLSX</span>
+          </div>
+        </div>
+      )}
+
+      {statementPreview.length > 0 && (
+        <div className="card mb-6">
+          <div className="card-header">
+            <div className="card-title">Review statement rows</div>
+            <span className="badge">{statementPreview.length} rows</span>
+          </div>
+          <div className="table-responsive">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Amount</th>
+                  <th>Recipient</th>
+                  <th>Transaction ID</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statementPreview.map((row, index) => (
+                  <tr key={`${row.transaction_id || 'row'}-${index}`}>
+                    <td>
+                      <input
+                        className="form-input"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        aria-label={`Row ${index + 1} amount`}
+                        value={row.amount ?? ''}
+                        onChange={(event) => updateStatementField(index, 'amount', event.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="form-input"
+                        type="text"
+                        aria-label={`Row ${index + 1} recipient`}
+                        value={row.receiver || ''}
+                        onChange={(event) => updateStatementField(index, 'receiver', event.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="form-input"
+                        type="text"
+                        aria-label={`Row ${index + 1} transaction ID`}
+                        value={row.transaction_id || ''}
+                        onChange={(event) => updateStatementField(index, 'transaction_id', event.target.value)}
+                      />
+                    </td>
+                    <td>{row.date || 'Not extracted'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <label className="flex items-center gap-2 text-sm mt-4">
+            <input
+              type="checkbox"
+              checked={statementVerified}
+              onChange={(event) => setStatementVerified(event.target.checked)}
+            />
+            I reviewed these rows and confirm they may be saved.
+          </label>
+          <div className="flex justify-end mt-4">
             <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => handleFileSelect(new File([''], 'sample_statement.csv', { type: 'text/csv' }))}
+              className="btn btn-primary"
+              disabled={!statementVerified || isUploading}
+              onClick={saveVerifiedStatement}
             >
-              Test with Sample Statement
+              {isUploading ? 'Saving…' : 'Save verified rows'}
             </button>
           </div>
         </div>
@@ -274,7 +331,7 @@ export default function UploadTransaction() {
         <form onSubmit={handleManualSubmit} className="card animate-fade-in">
           <div className="card-header">
             <div className="card-title">Enter Transaction Details Manually</div>
-            <span className="badge badge-info">Direct SQLite Input</span>
+            <span className="badge badge-info">Manual Entry</span>
           </div>
 
           <div className="grid grid-2">
@@ -353,6 +410,7 @@ export default function UploadTransaction() {
                 value={formData.category}
                 onChange={e => setFormData({ ...formData, category: e.target.value })}
               >
+                <option value="">Select category</option>
                 <option value="Shopping">Shopping / Retail</option>
                 <option value="Groceries">Groceries & Essentials</option>
                 <option value="Dining">Dining & Food Delivery</option>

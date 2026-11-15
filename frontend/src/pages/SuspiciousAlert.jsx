@@ -38,7 +38,7 @@ export default function SuspiciousAlert() {
 
   const score = analysis.score ?? 87;
   const level = analysis.level || (score >= 80 ? 'CRITICAL' : 'HIGH');
-  const badgeColor = level === 'CRITICAL' ? '#dc2626' : '#ef4444';
+  const badgeColor = level === 'CRITICAL' ? '#facc15' : '#facc15';
 
   const reasons = (analysis.factors || [])
     .filter(f => f.contribution > 0)
@@ -48,7 +48,7 @@ export default function SuspiciousAlert() {
     <div className="animate-fade-in" style={{ maxWidth: 820, margin: '0 auto' }}>
       {/* Alert Header */}
       <div className="page-header text-center">
-        <div className="flex items-center justify-center gap-2 mb-2" style={{ color: '#ef4444' }}>
+        <div className="flex items-center justify-center gap-2 mb-2" style={{ color: '#facc15' }}>
           <ShieldAlert size={32} />
           <h1>⚠ SUSPICIOUS TRANSACTION</h1>
         </div>
@@ -60,8 +60,8 @@ export default function SuspiciousAlert() {
         className="card mb-6 text-center"
         style={{
           border: `2px solid ${badgeColor}`,
-          background: 'linear-gradient(180deg, #2b0b14 0%, #150810 100%)',
-          boxShadow: '0 8px 30px rgba(239, 68, 68, 0.25)',
+          background: '#000000',
+          boxShadow: '0 8px 30px rgba(250, 204, 21, 0.25)',
           padding: '2rem'
         }}
       >
@@ -105,10 +105,10 @@ export default function SuspiciousAlert() {
       </div>
 
       {/* Detected Suspicious Patterns */}
-      <div className="card mb-6" style={{ border: '1px solid #ef4444' }}>
+      <div className="card mb-6" style={{ border: '1px solid #facc15' }}>
         <div className="card-header">
           <div className="card-title flex items-center gap-2 text-danger">
-            <AlertTriangle size={18} color="#ef4444" />
+            <AlertTriangle size={18} color="#facc15" />
             <span>Detected Suspicious / Fraud Patterns ({(analysis.detected_patterns_details || []).length})</span>
           </div>
           <span className="badge badge-critical">Active Risk</span>
@@ -120,14 +120,14 @@ export default function SuspiciousAlert() {
               key={idx}
               className="p-3"
               style={{
-                background: 'rgba(239,68,68,0.08)',
+                background: 'rgba(250, 204, 21, 0.08)',
                 borderRadius: 8,
-                borderLeft: '4px solid #ef4444',
+                borderLeft: '4px solid #facc15',
               }}
             >
               <div className="flex justify-between items-center mb-1">
                 <div className="font-bold text-xs text-pink flex items-center gap-2">
-                  <AlertCircle size={14} color="#ef4444" />
+                  <AlertCircle size={14} color="#facc15" />
                   <span>{item.name}</span>
                 </div>
                 <span className="badge badge-high text-xs">+{item.contribution} Risk Score</span>
@@ -161,12 +161,12 @@ export default function SuspiciousAlert() {
               style={{
                 background: 'var(--bg-card-subtle)',
                 borderRadius: 8,
-                borderLeft: pat.status?.includes('Insufficient') ? '3px solid #f59e0b' : '3px solid rgba(16,185,129,0.3)',
+                borderLeft: pat.status?.includes('Insufficient') ? '3px solid #facc15' : '3px solid rgba(250, 204, 21, 0.3)',
               }}
             >
               <div style={{ flex: 1 }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle size={14} color={pat.status?.includes('Insufficient') ? '#f59e0b' : '#10b981'} />
+                  <CheckCircle size={14} color={pat.status?.includes('Insufficient') ? '#facc15' : '#facc15'} />
                   <span className="font-semibold text-xs text-secondary">{pat.name}</span>
                   <span className={`badge ${pat.status?.includes('Insufficient') ? 'badge-medium' : 'badge-low'}`} style={{ fontSize: '0.65rem' }}>
                     {pat.status || 'Not Detected'}
@@ -195,10 +195,10 @@ export default function SuspiciousAlert() {
               style={{
                 background: 'var(--bg-card-subtle)',
                 borderRadius: 8,
-                borderLeft: '3px solid #ef4444'
+                borderLeft: '3px solid #facc15'
               }}
             >
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', marginTop: 6, flexShrink: 0 }} />
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#facc15', marginTop: 6, flexShrink: 0 }} />
               <div className="text-xs text-secondary leading-relaxed">
                 {r}
               </div>
@@ -208,14 +208,14 @@ export default function SuspiciousAlert() {
       </div>
 
       {/* "What Next?" Actionable Recommendations */}
-      <div className="card mb-6" style={{ border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+      <div className="card mb-6" style={{ border: '1px solid rgba(250, 204, 21, 0.3)' }}>
         <div className="card-header">
           <div className="card-title flex items-center gap-2 text-danger">
             <Lock size={16} />
             What Next?
           </div>
         </div>
-        <div className="p-4" style={{ background: 'rgba(239,68,68,0.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)' }}>
+        <div className="p-4" style={{ background: 'rgba(250, 204, 21, 0.06)', borderRadius: 8, border: '1px solid rgba(250, 204, 21, 0.25)' }}>
           <p className="text-sm font-semibold text-secondary leading-relaxed mb-3">
             {analysis.recommendation}
           </p>
@@ -227,8 +227,8 @@ export default function SuspiciousAlert() {
         </div>
 
         {/* Security Alert: Never Share PIN/OTP */}
-        <div className="mt-4 p-3 flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.12)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)' }}>
-          <ShieldAlert size={18} color="#ef4444" style={{ flexShrink: 0 }} />
+        <div className="mt-4 p-3 flex items-center gap-2" style={{ background: 'rgba(250, 204, 21, 0.12)', borderRadius: 8, border: '1px solid rgba(250, 204, 21, 0.3)' }}>
+          <ShieldAlert size={18} color="#facc15" style={{ flexShrink: 0 }} />
           <div className="text-xs text-secondary">
             <strong>Security Reminder:</strong> Never share your UPI PIN, OTP, Bank Password, or Card PIN with anyone.
           </div>
@@ -246,7 +246,7 @@ export default function SuspiciousAlert() {
       </div>
 
       <div className="notice-box info">
-        <Info size={16} color="var(--pink-light)" style={{ flexShrink: 0, marginTop: 2 }} />
+        <Info size={16} color="var(--yellow-light)" style={{ flexShrink: 0, marginTop: 2 }} />
         <div className="text-xs text-tertiary leading-relaxed">
           <strong>Academic Prototype Notice:</strong> This project is for risk assessment demonstration only. It does not actually initiate or block UPI payments.
         </div>

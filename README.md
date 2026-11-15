@@ -6,181 +6,133 @@
 
 ## 🌟 Project Overview
 
-**UPI Fraud Detection and Risk Assessment System** is a clean, explainable academic cybersecurity prototype for analyzing UPI transactions against user behavioural baselines.
+**UPI Fraud Detection and Risk Assessment System** is a lightweight, explainable, and production-ready cybersecurity application for detecting fraudulent UPI transactions and assessing risk against behavioral baselines.
 
-The system features:
-1. **Local App-Aware OCR Engine (PaddleOCR)**: Automatically detects whether a transaction screenshot is from **BHIM**, **PhonePe**, or **Google Pay**, and extracts amount, recipient, transaction ID / UTR, date/time, UPI ID, bank account, and remarks using layout-specific region rules.
-2. **13 Behavioral Fraud Patterns (P1–P13)**: Explains exact behavioral indicators (rapid bursts, repeated same-amount transactions, amount deviations, new recipients, and deceptive AutoPay / recurring mandate setups).
-3. **Transparent Explainability (XAI)**: Generates human-readable "Why?" explanations and actionable safety recommendations.
-4. **Active Mode vs Demo Mode Isolation**: Permanent Active Mode with real local SQLite persistence, plus an isolated password-protected (`admin123`) Demo Mode for academic evaluations.
+### 📐 Simplified Modern Architecture
+* **Frontend**: React 19 + Vite (Strict three-color palette: Black `#000000`, Yellow `#facc15`, White `#ffffff`).
+* **Source Code**: GitHub Repository.
+* **Database**: Supabase PostgreSQL.
+* **Authentication**: Supabase Auth (4 Administrator accounts with username-to-email mapping).
+* **Hosting**: Vercel.
+* **OCR Pipeline**: Client-side WebAssembly (`tesseract.js`) with dedicated layout parsers for **BHIM**, **PhonePe**, and **Google Pay**.
+* **Risk Engine**: 13 Suspicious Behavioral Patterns (P1–P13) with Explainable AI (XAI) rationale and actionable safety recommendations.
+* **Zero Backend Hosting Overhead**: No Flask, no Render, no secondary server or API proxies.
 
 ---
 
 ## 🔄 End-to-End Workflow
 
 ```
-Upload Screenshot
+UPI Screenshot / Statement Upload
    ↓
-Detect App (BHIM / PhonePe / Google Pay)
+Client-Side OCR (Tesseract.js WASM)
    ↓
-PaddleOCR Reads Text & Bounding Boxes
+App Recognition (BHIM / PhonePe / Google Pay)
    ↓
-App-Specific Region/Field Mapping
+Field Extraction (Amount, Receiver, UPI ID, UTR, Date, Time, Mandates)
    ↓
-Data Validation & Confidence Scoring
+Interactive Verification & Data Confirmation (/confirm)
    ↓
-User Verification & Confirmation
+Persisted Directly to Supabase PostgreSQL (Shared for all 4 Admins)
    ↓
-Transaction Saved to Local SQLite
+13-Pattern Behavioral Fraud Assessment (P1–P13)
    ↓
-Fraud Risk & Behavioral Pattern Analysis
+Explainable Output: Risk Score, Severity Gauge, "Why?" Explanation, & "What Next?" Guidance
 ```
 
 ---
 
-## 💻 Technology Stack
+## 👥 Administrator Accounts & Authentication
 
-- **Frontend**: React 19 + Vite (Cybersecurity Black + Pink theme)
-- **Backend**: Python 3.9+ with Flask (REST API on `localhost:8000`)
-- **Database**: Embedded SQLite (`backend/fraud_detection.db`)
-- **OCR Engine**: PaddleOCR (100% Local Inference, no cloud APIs)
-- **Analytics**: pandas, scikit-learn, numpy
+The application provides equal administrative access to all four designated project administrators. Users sign in using their **Username** and **Password** (no email input field displayed on the login screen):
 
-> **Zero Cloud Dependencies**: 100% localhost operation. No Firebase, AWS, MongoDB, or external cloud services.
+| Username | Mapped Supabase Auth Email | Default Password | Role |
+| :--- | :--- | :--- | :--- |
+| **USER1** | `user1@achariyacollege.com` | `admin123` | Administrator |
+| **USER2** | `user2@achariyacollege.com` | `admin123` | Administrator |
+| **USER3** | `user3@achariyacollege.com` | `admin123` | Administrator |
+| **USER4** | `user4@achariyacollege.com` | `admin123` | Administrator |
+
+* **Session Persistence**: Sessions persist across browser page refreshes via Supabase Auth.
+* **Header Integration**: The top navigation bar displays the active administrator's username (e.g. `USER1 [Admin]`) and provides a **Sign Out** button.
+* **Independent Password Reset**: Each administrator can update their password independently in the application under **Settings** or via the Supabase Dashboard.
+
+### Creating Accounts in Supabase Dashboard
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard).
+2. Navigate to **Authentication** → **Users**.
+3. Click **Add User** → **Create User** for each of the 4 accounts:
+   - `user1@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
+   - `user2@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
+   - `user3@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
+   - `user4@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
 
 ---
 
-## 🚀 One-Click Setup & Launch
+## 🗄️ Database Setup & SQL Migration
 
-Clone the repository and run the self-bootstrapping launcher:
+Run the provided migration script [`supabase/supabase_auth_migration.sql`](./supabase/supabase_auth_migration.sql) in your Supabase SQL Editor:
+1. Removes obsolete Flask session tables (`admin_sessions`, `auth_login_attempts`, `admin_audit_logs`).
+2. Retains all application transaction tables:
+   - `public.transactions`
+   - `public.fraud_analyses`
+   - `public.alerts`
+   - `public.validated_samples`
+   - `public.training_runs`
+   - `public.system_config`
+3. Grants table privileges and applies Row Level Security (RLS) policies so all 4 authenticated administrators share access to the same records.
 
+---
+
+## 🧭 Navigation & Page Visibility
+
+### Active Mode (Default)
+In Active Mode, only production monitoring and management items are displayed:
+* **OVERVIEW**: Dashboard
+* **TRANSACTIONS**: Upload Transactions, Transaction History
+* **INTELLIGENCE**: Fraud Analysis, Alerts, Reports
+* **SYSTEM**: Settings, About Project
+
+*(Demo-only presentation pages such as "How It Works", "Behaviour Profile", "Adaptive Learning", and "Model Monitoring" are hidden in Active Mode).*
+
+### Demo Mode
+In Demo Mode, all 17 presentation, tutorial, and simulation pages are available:
+* Switch between modes using the **Switch Mode** button in the header (Confirmation password: `admin123`).
+* Demo transactions and active transactions remain strictly isolated using the `mode` flag.
+
+### 🍔 Sidebar Collapse / Full-Width Content
+* Clicking the three-horizontal-line **hamburger icon** in the header collapses the left navigation sidebar completely.
+* The main content area expands smoothly to 100% full screen width, providing wider charts, tables, and inspection views.
+* Clicking the hamburger icon again restores the sidebar on the left side.
+
+---
+
+## ⚡ Local Development & Vercel Deployment
+
+### 1. Local Development
 ```bash
+# Clone the repository
 git clone https://github.com/sivasan18/UPI-Fraud-Detection.git
 cd UPI-Fraud-Detection
-chmod +x start.sh
-./start.sh
-```
 
-`./start.sh` will automatically:
-1. Create `backend/venv` and install all dependencies from `requirements.txt`.
-2. Install frontend packages with `npm install` if not present.
-3. Start the Flask backend on `http://localhost:8000`.
-4. Start the React frontend on `http://localhost:5173`.
+# Set environment variables
+cp .env.example frontend/.env
+# Add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env
 
----
-
-## 🛠️ Manual Installation (Alternative)
-
-### Backend Setup:
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python app.py
-```
-
-### Frontend Setup:
-```bash
+# Install dependencies and start Vite dev server
 cd frontend
 npm install
 npm run dev
 ```
 
-Visit: **`http://localhost:5173`**
-
----
-
-## 📁 Project Structure
-
-```
-├── .gitignore                     # Git rules (excludes venv, node_modules, temp files)
-├── README.md                      # Project documentation and setup guide
-├── start.sh                       # One-click startup & dependency bootstrapper
-├── backend/
-│   ├── app.py                     # Flask REST API endpoints
-│   ├── database.py                # SQLite database management
-│   ├── ocr_service.py             # PaddleOCR engine & app-specific extractors
-│   ├── risk_engine.py             # 13-pattern behavioural fraud detection engine
-│   ├── profile_engine.py          # User spending baseline profiling
-│   ├── requirements.txt           # Python backend dependencies
-│   ├── fraud_detection.db         # Local SQLite database
-│   └── reference_samples/         # Ground-truth layout reference screenshots
-│       ├── bhim/bhim_sample.jpg
-│       ├── phonepe/phonepe_sample.jpg
-│       └── googlepay/googlepay_sample.jpg
-└── frontend/
-    ├── package.json               # Frontend dependencies
-    ├── vite.config.js             # Vite development server config
-    └── src/
-        ├── context/AppContext.jsx # Application state & Active/Demo mode logic
-        ├── pages/                 # React UI pages (Upload, OCR, Analysis, History, etc.)
-        └── components/            # Reusable UI components & layouts
-```
-
----
-
-
-## 🔬 OCR Setup
-
-### How OCR Models Are Managed
-
-The system uses **PaddleOCR** (local inference, no cloud API). Model files (~177 MB) are downloaded **once** on first run and cached at `backend/models/paddlex/`. They are **not committed to git** (too large), but are **automatically re-downloaded** whenever the marker file `backend/models/paddlex/official_models/.ready` is missing.
-
-### Fresh Clone (Automatic — Recommended)
-
-```bash
-git clone https://github.com/sivasan18/UPI-Fraud-Detection.git
-cd UPI-Fraud-Detection
-chmod +x start.sh
-./start.sh
-```
-
-`start.sh` automatically detects whether OCR models are present and downloads them if not. No manual steps required.
-
-### Manual OCR Model Download (if needed)
-
-If OCR fails after a restart, you can force a fresh model download:
-
-```bash
-cd backend
-venv/bin/python3 download_models.py
-```
-
-This script:
-1. Sets `PADDLE_PDX_CACHE_HOME` to `backend/models/paddlex/` (project-local).
-2. Downloads and verifies all required OCR models.
-3. Runs a smoke test to confirm the engine works.
-
-### Why OCR Is Persistent After Restart
-
-- `PADDLE_PDX_CACHE_HOME` is set to a **project-relative absolute path** (`backend/models/paddlex/`) inside `ocr_service.py` at module load time — before any PaddleOCR imports.
-- This means it is **independent of the shell session, current working directory, or any environment variable** you set externally.
-- The Flask backend also **pre-warms the OCR engine on startup**, so any model failure is immediately visible in the terminal log.
-
-### Verifying OCR Is Working
-
-Check the Flask startup log. You should see:
-```
-[Startup] Pre-warming PaddleOCR engine from: .../backend/models/paddlex
-[Startup] PaddleOCR engine is ready.
-```
-
-Or call the health API:
-```bash
-curl http://localhost:8000/api/health
-```
-
-A healthy response includes:
-```json
-{ "ocr_ready": true, "ocr_model_dir": "...", "ocr_error": null }
-```
-
----
-## 🔐 Administrator Password
-- Administrator password for switching to Demo Mode and removing Demo data: **`admin123`**
-
----
-
-## ⚠️ Academic Disclaimer
-*This project is an academic research prototype developed for B.Tech CSE final-year evaluation. It operates strictly locally on user-submitted or synthetic transaction records and does not connect to real banking networks or payment gateways.*
+### 2. Deploy to Vercel
+1. Push this repository to GitHub.
+2. Go to [Vercel Dashboard](https://vercel.com/) and click **New Project** → Import the GitHub repository.
+3. Configure the project:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `frontend` (or leave root with the included `vercel.json`)
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Add Environment Variables in Vercel:
+   - `VITE_SUPABASE_URL`: `https://eojjgcmdxkavnqzkjkjr.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY`: *(Your Supabase publishable anon key)*
+5. Click **Deploy**.

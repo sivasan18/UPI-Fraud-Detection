@@ -42,7 +42,7 @@ export default function FraudAnalysisResult() {
   const isMedium = level === 'MEDIUM';
   const isLow = level === 'LOW';
 
-  const badgeColor = isCritical ? '#dc2626' : isHigh ? '#ef4444' : isMedium ? '#f59e0b' : '#10b981';
+  const badgeColor = isCritical ? '#facc15' : isHigh ? '#facc15' : isMedium ? '#facc15' : '#facc15';
   const badgeClass = isCritical ? 'badge-critical' : isHigh ? 'badge-high' : isMedium ? 'badge-medium' : 'badge-low';
 
   // "Why?" reasons
@@ -68,8 +68,8 @@ export default function FraudAnalysisResult() {
       <div className="page-header text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           {isLow && <ShieldCheck size={28} color="var(--risk-low)" />}
-          {isMedium && <AlertCircle size={28} color="#f59e0b" />}
-          {(isHigh || isCritical) && <ShieldAlert size={28} color="#ef4444" />}
+          {isMedium && <AlertCircle size={28} color="#facc15" />}
+          {(isHigh || isCritical) && <ShieldAlert size={28} color="#facc15" />}
           <h1>
             {isLow && '✓ LOW RISK RESULT'}
             {isMedium && '⚠ MEDIUM RISK RESULT'}
@@ -84,8 +84,8 @@ export default function FraudAnalysisResult() {
         className="card mb-6 text-center"
         style={{
           border: `2px solid ${badgeColor}`,
-          background: 'linear-gradient(180deg, #1c1024 0%, #110918 100%)',
-          boxShadow: `0 8px 30px ${isLow ? 'rgba(16,185,129,0.15)' : 'rgba(236,72,153,0.2)'}`,
+          background: '#000000',
+          boxShadow: `0 8px 30px ${isLow ? 'rgba(250, 204, 21, 0.15)' : 'rgba(250, 204, 21, 0.2)'}`,
           padding: '2rem'
         }}
       >
@@ -129,10 +129,10 @@ export default function FraudAnalysisResult() {
       </div>
 
       {/* Detected Suspicious Patterns */}
-      <div className="card mb-6" style={{ border: (analysis.detected_patterns_details || []).length > 0 ? '1px solid #ef4444' : '1px solid var(--border-subtle)' }}>
+      <div className="card mb-6" style={{ border: (analysis.detected_patterns_details || []).length > 0 ? '1px solid #facc15' : '1px solid var(--border-subtle)' }}>
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <AlertTriangle size={18} color={(analysis.detected_patterns_details || []).length > 0 ? '#ef4444' : 'var(--risk-low)'} />
+            <AlertTriangle size={18} color={(analysis.detected_patterns_details || []).length > 0 ? '#facc15' : 'var(--risk-low)'} />
             <span>Detected Suspicious / Fraud Patterns ({(analysis.detected_patterns_details || []).length})</span>
           </div>
           {(analysis.detected_patterns_details || []).length > 0 ? (
@@ -143,7 +143,7 @@ export default function FraudAnalysisResult() {
         </div>
 
         {(analysis.detected_patterns_details || []).length === 0 ? (
-          <div className="p-4 text-center" style={{ background: 'rgba(16,185,129,0.06)', borderRadius: 8 }}>
+          <div className="p-4 text-center" style={{ background: 'rgba(250, 204, 21, 0.06)', borderRadius: 8 }}>
             <CheckCircle size={22} color="var(--risk-low)" className="mx-auto mb-1" />
             <div className="font-semibold text-xs text-emerald-400">No Fraud Patterns Detected</div>
             <div className="text-xs text-tertiary mt-1">Transaction is consistent with normal baseline spending behavior.</div>
@@ -155,14 +155,14 @@ export default function FraudAnalysisResult() {
                 key={idx}
                 className="p-3"
                 style={{
-                  background: 'rgba(239,68,68,0.08)',
+                  background: 'rgba(250, 204, 21, 0.08)',
                   borderRadius: 8,
-                  borderLeft: '4px solid #ef4444',
+                  borderLeft: '4px solid #facc15',
                 }}
               >
                 <div className="flex justify-between items-center mb-1">
                   <div className="font-bold text-xs text-pink flex items-center gap-2">
-                    <AlertCircle size={14} color="#ef4444" />
+                    <AlertCircle size={14} color="#facc15" />
                     <span>{item.name}</span>
                   </div>
                   <span className="badge badge-high text-xs">+{item.contribution} Risk Score</span>
@@ -197,12 +197,12 @@ export default function FraudAnalysisResult() {
               style={{
                 background: 'var(--bg-card-subtle)',
                 borderRadius: 8,
-                borderLeft: pat.status?.includes('Insufficient') ? '3px solid #f59e0b' : '3px solid rgba(16,185,129,0.3)',
+                borderLeft: pat.status?.includes('Insufficient') ? '3px solid #facc15' : '3px solid rgba(250, 204, 21, 0.3)',
               }}
             >
               <div style={{ flex: 1 }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle size={14} color={pat.status?.includes('Insufficient') ? '#f59e0b' : '#10b981'} />
+                  <CheckCircle size={14} color={pat.status?.includes('Insufficient') ? '#facc15' : '#facc15'} />
                   <span className="font-semibold text-xs text-secondary">{pat.name}</span>
                   <span className={`badge ${pat.status?.includes('Insufficient') ? 'badge-medium' : 'badge-low'}`} style={{ fontSize: '0.65rem' }}>
                     {pat.status || 'Not Detected'}
@@ -250,22 +250,22 @@ export default function FraudAnalysisResult() {
       </div>
 
       {/* "What Next?" Section */}
-      <div className="card mb-6" style={{ border: '1px solid var(--pink-border)' }}>
+      <div className="card mb-6" style={{ border: '1px solid var(--yellow-border)' }}>
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <Lock size={16} color="var(--pink-light)" />
+            <Lock size={16} color="var(--yellow-light)" />
             What Next?
           </div>
         </div>
-        <div className="p-4" style={{ background: 'rgba(236,72,153,0.06)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+        <div className="p-4" style={{ background: 'rgba(250, 204, 21, 0.06)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
           <p className="text-sm font-semibold text-secondary leading-relaxed">
             {whatNextText}
           </p>
         </div>
 
         {/* Security Alert: Never Share PIN/OTP */}
-        <div className="mt-4 p-3 flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.08)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)' }}>
-          <ShieldAlert size={16} color="#ef4444" style={{ flexShrink: 0 }} />
+        <div className="mt-4 p-3 flex items-center gap-2" style={{ background: 'rgba(250, 204, 21, 0.08)', borderRadius: 8, border: '1px solid rgba(250, 204, 21, 0.25)' }}>
+          <ShieldAlert size={16} color="#facc15" style={{ flexShrink: 0 }} />
           <div className="text-xs text-secondary">
             <strong>Security Reminder:</strong> Never share your UPI PIN, OTP, Bank Password, or Debit/Credit Card PIN with anyone.
           </div>
@@ -283,7 +283,7 @@ export default function FraudAnalysisResult() {
       </div>
 
       <div className="notice-box info">
-        <Info size={16} color="var(--pink-light)" style={{ flexShrink: 0, marginTop: 2 }} />
+        <Info size={16} color="var(--yellow-light)" style={{ flexShrink: 0, marginTop: 2 }} />
         <div className="text-xs text-tertiary leading-relaxed">
           <strong>Academic Prototype Notice:</strong> This project is for risk assessment demonstration only. It does not actually initiate or block UPI payments.
         </div>

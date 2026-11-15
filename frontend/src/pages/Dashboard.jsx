@@ -58,8 +58,8 @@ export default function Dashboard() {
 
       {/* Demo Mode Synthetic Data Notice */}
       {currentMode === 'DEMO' && (
-        <div className="notice-box info mb-5" style={{ borderColor: 'rgba(236,72,153,0.3)', background: 'rgba(236,72,153,0.06)' }}>
-          <AlertTriangle size={16} color="var(--pink-light)" style={{ flexShrink: 0, marginTop: 2 }} />
+        <div className="notice-box info mb-5" style={{ borderColor: 'rgba(250, 204, 21, 0.3)', background: 'rgba(250, 204, 21, 0.06)' }}>
+          <AlertTriangle size={16} color="var(--yellow-light)" style={{ flexShrink: 0, marginTop: 2 }} />
           <div className="text-xs text-secondary">
             <strong className="text-pink">DEMO MODE</strong> — Synthetic data for project demonstration. Active Mode data is not affected.
           </div>
@@ -96,17 +96,17 @@ export default function Dashboard() {
       {/* 100 Transaction Profile Baseline Notice */}
       <div className="card mb-6" style={{ padding: '1.25rem 1.5rem' }}>
         <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div className="font-semibold text-sm" style={{ color: '#fff' }}>
+          <div className="font-semibold text-sm" style={{ color: '#ffffff' }}>
             Transaction Profile Baseline ({validTransactions} / 100)
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/profile')} style={{ color: 'var(--pink-light)' }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/profile')} style={{ color: 'var(--yellow-light)' }}>
             View Behaviour Profile <ArrowRight size={13} />
           </button>
         </div>
         <p className="text-xs text-secondary mb-3">
           Recommended minimum: 100 validated transactions for optimal behavioural profiling.
           {validTransactions < 100 && (
-            <span style={{ color: '#f59e0b', display: 'block', marginTop: 4 }}>
+            <span style={{ color: '#facc15', display: 'block', marginTop: 4 }}>
               * Behaviour analysis may be limited because the transaction history is small.
             </span>
           )}
@@ -166,7 +166,7 @@ export default function Dashboard() {
                         <td className="text-xs font-semibold text-secondary">
                           {t.receiver}
                         </td>
-                        <td className="text-xs font-mono font-semibold" style={{ color: '#fff' }}>
+                        <td className="text-xs font-mono font-semibold" style={{ color: '#ffffff' }}>
                           ₹{Number(t.amount || 0).toLocaleString()}
                         </td>
                         <td>
@@ -180,7 +180,7 @@ export default function Dashboard() {
                               <Eye size={13} />
                             </button>
                             <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(t.id || t.transaction_id)} title="Delete">
-                              <Trash2 size={13} color="#f43f5e" />
+                              <Trash2 size={13} color="#facc15" />
                             </button>
                           </div>
                         </td>
@@ -216,7 +216,7 @@ export default function Dashboard() {
                   style={{
                     background: 'var(--bg-card-subtle)',
                     borderRadius: 8,
-                    border: '1px solid rgba(236, 72, 153, 0.2)',
+                    border: '1px solid rgba(250, 204, 21, 0.2)',
                   }}
                 >
                   <div className="flex justify-between items-start gap-2 mb-1">
@@ -237,7 +237,7 @@ export default function Dashboard() {
 
       {/* Academic Disclaimer Footer */}
       <div className="notice-box info" style={{ padding: '0.75rem 1rem' }}>
-        <Info size={16} color="var(--pink-light)" style={{ flexShrink: 0, marginTop: 2 }} />
+        <Info size={16} color="var(--yellow-light)" style={{ flexShrink: 0, marginTop: 2 }} />
         <div className="text-xs text-tertiary leading-relaxed">
           <strong>Academic Project Disclaimer:</strong> This project is an academic prototype for UPI transaction risk assessment. It does not access bank accounts, initiate payments, or guarantee that a transaction is safe or fraudulent.
         </div>

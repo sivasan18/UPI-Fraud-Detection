@@ -2,12 +2,12 @@
 // UPI Fraud Detection and Risk Assessment System
 // Analyse Transaction Page — Auto-Fill from History & 13-Pattern Evaluation
 // ==============================================================================
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Loader2, CheckCircle2, Play, AlertCircle, ArrowRight,
   ShieldCheck, History, X, AlertTriangle, ShieldAlert, Lock, Info,
-  RotateCcw, Eye, ExternalLink, RefreshCw
+  RotateCcw, ExternalLink
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -18,7 +18,7 @@ const ANALYSIS_PIPELINE = [
   'Detecting recipient novelty & counterparty risk',
   'Scanning time-of-day and frequency burst anomalies',
   'Checking AutoPay / Mandate & subsequent recurring debit patterns',
-  'Executing machine learning risk classification engine',
+  'Computing the rule-based risk score',
   'Computing explainable AI (XAI) feature contributions',
   'Synthesizing actionable security recommendations',
 ];
@@ -32,27 +32,26 @@ export default function AnalyseTransaction() {
   const [selectedHistoryId, setSelectedHistoryId] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
   const [showPatternModal, setShowPatternModal] = useState(false);
+  const [analysisError, setAnalysisError] = useState('');
 
   // Editable Target Transaction Parameters
   const [targetTxn, setTargetTxn] = useState(
     currentTransaction || {
-      id: 'txn-eval-' + Date.now(),
-      amount: 8500,
-      receiver: 'NEW_MERCHANT_CORP',
-      receiver_upi: 'newmerchant@upi',
-      sender_upi: 'user@okhdfc',
-      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      time: '01:45 AM',
-      hour: 1,
-      transaction_id: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
-      remarks: 'Payment for online services',
-      status: 'Successful',
-      category: 'Online Shopping',
-      payment_mode: 'UPI',
-      autopay_mandate: 'None',
-      expected_recurring_amount: 0,
-      device: 'Samsung Galaxy S23',
-      location: 'Chennai',
+      amount: '',
+      receiver: '',
+      receiver_upi: '',
+      sender_upi: '',
+      date: '',
+      time: '',
+      transaction_id: '',
+      remarks: '',
+      status: '',
+      category: '',
+      payment_mode: '',
+      autopay_mandate: '',
+      expected_recurring_amount: '',
+      device: '',
+      location: '',
     }
   );
 
@@ -65,23 +64,23 @@ export default function AnalyseTransaction() {
     const chosen = transactions.find(t => String(t.id) === String(txnId) || String(t.transaction_id) === String(txnId));
     if (chosen) {
       const populated = {
-        id: chosen.id || `txn-${Date.now()}`,
+        id: chosen.id,
         amount: parseFloat(chosen.amount || 0),
-        receiver: chosen.receiver || chosen.merchant || 'Unknown Recipient',
+        receiver: chosen.receiver || chosen.merchant || '',
         receiver_upi: chosen.receiver_upi || chosen.receiverUpi || '',
-        sender_upi: chosen.sender_upi || chosen.senderUpi || 'user@okhdfc',
-        date: chosen.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-        time: chosen.time || '12:00 PM',
-        hour: chosen.hour !== undefined ? chosen.hour : 12,
-        transaction_id: chosen.transaction_id || chosen.transactionId || `TXN${Date.now()}`,
+        sender_upi: chosen.sender_upi || chosen.senderUpi || '',
+        date: chosen.date || '',
+        time: chosen.time || '',
+        hour: chosen.hour ?? undefined,
+        transaction_id: chosen.transaction_id || chosen.transactionId || '',
         remarks: chosen.remarks || chosen.notes || '',
-        status: chosen.status || 'Successful',
-        category: chosen.category || 'General',
-        payment_mode: chosen.payment_mode || chosen.paymentMode || 'UPI',
-        autopay_mandate: chosen.autopay_mandate || chosen.autopayMandate || 'None',
-        expected_recurring_amount: parseFloat(chosen.expected_recurring_amount || chosen.expectedRecurringAmount || 0),
-        device: chosen.device || 'Android Client',
-        location: chosen.location || 'Localhost',
+        status: chosen.status || '',
+        category: chosen.category || '',
+        payment_mode: chosen.payment_mode || chosen.paymentMode || '',
+        autopay_mandate: chosen.autopay_mandate || chosen.autopayMandate || '',
+        expected_recurring_amount: chosen.expected_recurring_amount || chosen.expectedRecurringAmount || '',
+        device: chosen.device || '',
+        location: chosen.location || '',
       };
       setTargetTxn(populated);
       setCurrentTransaction(populated);
@@ -93,23 +92,21 @@ export default function AnalyseTransaction() {
   const handleClearForm = () => {
     setSelectedHistoryId('');
     const blank = {
-      id: 'txn-manual-' + Date.now(),
       amount: '',
       receiver: '',
       receiver_upi: '',
       sender_upi: '',
-      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      time: '12:00 PM',
-      hour: 12,
-      transaction_id: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
+      date: '',
+      time: '',
+      transaction_id: '',
       remarks: '',
-      status: 'Successful',
-      category: 'General',
-      payment_mode: 'UPI',
-      autopay_mandate: 'None',
-      expected_recurring_amount: 0,
-      device: 'Local Client',
-      location: 'Localhost',
+      status: '',
+      category: '',
+      payment_mode: '',
+      autopay_mandate: '',
+      expected_recurring_amount: '',
+      device: '',
+      location: '',
     };
     setTargetTxn(blank);
     setCurrentTransaction(blank);
@@ -118,6 +115,11 @@ export default function AnalyseTransaction() {
 
   // Run Real Risk Assessment Engine
   const handleStartAnalysis = async () => {
+    setAnalysisError('');
+    if (!Number.isFinite(Number(targetTxn.amount)) || Number(targetTxn.amount) <= 0 || !targetTxn.receiver?.trim()) {
+      setAnalysisError('Enter a valid amount and recipient to analyze.');
+      return;
+    }
     setIsAnalysing(true);
     setPipelineStep(0);
     setAnalysisResult(null);
@@ -140,6 +142,7 @@ export default function AnalyseTransaction() {
         setIsAnalysing(false);
 
         if (result) {
+          setAnalysisError('');
           setAnalysisResult(result);
           setCurrentAnalysis(result);
           setCurrentTransaction(payload);
@@ -155,6 +158,8 @@ export default function AnalyseTransaction() {
             const el = document.getElementById('analysis-results-section');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }, 200);
+        } else {
+          setAnalysisError('Analysis could not be completed. Check the transaction and try again.');
         }
       }
     }, 240);
@@ -181,7 +186,7 @@ export default function AnalyseTransaction() {
         autopay_mandate: 'None',
         expected_recurring_amount: 0,
         device: 'Pixel 7',
-        location: 'Localhost',
+        location: '',
       };
     } else if (type === 'high_val') {
       preset = {
@@ -219,7 +224,7 @@ export default function AnalyseTransaction() {
         autopay_mandate: 'None',
         expected_recurring_amount: 0,
         device: 'Mobile',
-        location: 'Localhost',
+        location: '',
       };
     } else if (type === 'p13_autopay') {
       // Pattern 13 Preset: ₹1 small initial trial payment with deceptive AutoPay mandate of ₹599
@@ -239,7 +244,7 @@ export default function AnalyseTransaction() {
         autopay_mandate: 'Active (₹599/month)',
         expected_recurring_amount: 599,
         device: 'Mobile Browser',
-        location: 'Localhost',
+        location: '',
       };
     }
     setTargetTxn(preset);
@@ -249,7 +254,7 @@ export default function AnalyseTransaction() {
 
   const score = analysisResult?.score ?? 0;
   const level = analysisResult?.level || (score >= 80 ? 'CRITICAL' : score >= 60 ? 'HIGH' : score >= 30 ? 'MEDIUM' : 'LOW');
-  const badgeColor = level === 'CRITICAL' ? '#dc2626' : level === 'HIGH' ? '#ef4444' : level === 'MEDIUM' ? '#f59e0b' : '#10b981';
+  const badgeColor = level === 'CRITICAL' ? '#facc15' : level === 'HIGH' ? '#facc15' : level === 'MEDIUM' ? '#facc15' : '#facc15';
   const badgeClass = level === 'CRITICAL' ? 'badge-critical' : level === 'HIGH' ? 'badge-high' : level === 'MEDIUM' ? 'badge-medium' : 'badge-low';
 
   const detectedDetails = analysisResult?.detected_patterns_details || [];
@@ -267,17 +272,17 @@ export default function AnalyseTransaction() {
       <div
         className="card mb-6"
         style={{
-          border: '1px solid var(--pink-border)',
-          background: 'linear-gradient(180deg, rgba(236,72,153,0.08) 0%, var(--bg-card) 100%)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.25)'
+          border: '1px solid var(--yellow-border)',
+          background: 'rgba(250, 204, 21, 0.08)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)'
         }}
       >
         <div className="card-header pb-2">
           <div className="card-title flex items-center gap-2">
-            <History size={18} color="var(--pink-light)" />
+            <History size={18} color="var(--yellow-light)" />
             <span>Select Transaction from History (Auto-Fill Parameters)</span>
           </div>
-          <span className="badge badge-pink">{transactions.length} Available in SQLite</span>
+          <span className="badge badge-pink">{transactions.length} Available in {currentMode} history</span>
         </div>
         <p className="text-xs text-tertiary mb-3">
           Select any verified or synthetic transaction from the database. All parameters will instantly auto-populate and remain fully editable before running the assessment.
@@ -313,8 +318,8 @@ export default function AnalyseTransaction() {
         </div>
 
         {selectedHistoryId && (
-          <div className="mt-3 p-2.5 flex items-center justify-between" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 6 }}>
-            <div className="flex items-center gap-2 text-xs text-emerald-400">
+          <div className="mt-3 p-2.5 flex items-center justify-between" style={{ background: 'rgba(250, 204, 21, 0.1)', border: '1px solid rgba(250, 204, 21, 0.3)', borderRadius: 6 }}>
+            <div className="flex items-center gap-2 text-xs text-secondary">
               <CheckCircle2 size={14} />
               <span>Auto-filled stored parameters for <strong>{targetTxn.receiver}</strong> (ID: {targetTxn.transaction_id})</span>
             </div>
@@ -327,7 +332,7 @@ export default function AnalyseTransaction() {
       <div className="card mb-6">
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <ShieldCheck size={18} color="var(--pink-light)" />
+            <ShieldCheck size={18} color="var(--yellow-light)" />
             <span>Transaction Evaluation Parameters</span>
           </div>
           <span className="badge badge-pink">{currentMode} Mode</span>
@@ -416,9 +421,10 @@ export default function AnalyseTransaction() {
             <label className="form-label">Transaction Status</label>
             <select
               className="form-select"
-              value={targetTxn.status || 'Successful'}
+              value={targetTxn.status || ''}
               onChange={e => setTargetTxn({ ...targetTxn, status: e.target.value })}
             >
+              <option value="">Select status</option>
               <option value="Successful">Successful</option>
               <option value="Completed">Completed</option>
               <option value="Pending">Pending</option>
@@ -475,6 +481,9 @@ export default function AnalyseTransaction() {
         </div>
 
         {/* Action Buttons */}
+        {analysisError && (
+          <p role="alert" className="text-sm text-primary mb-3">{analysisError}</p>
+        )}
         {!isAnalysing ? (
           <div className="flex justify-between items-center flex-wrap gap-3 pt-2">
             <button className="btn btn-secondary" onClick={() => navigate('/upload')}>
@@ -485,7 +494,7 @@ export default function AnalyseTransaction() {
             </button>
           </div>
         ) : (
-          <div className="p-6" style={{ background: 'var(--bg-card-subtle)', borderRadius: 12, border: '1px solid var(--pink-border)' }}>
+          <div className="p-6" style={{ background: 'var(--bg-card-subtle)', borderRadius: 12, border: '1px solid var(--yellow-border)' }}>
             <div className="flex items-center gap-3 mb-4 text-pink font-semibold">
               <Loader2 className="animate-spin" size={20} />
               <span>Executing AI Risk & 13-Pattern XAI Evaluation Pipeline...</span>
@@ -499,8 +508,8 @@ export default function AnalyseTransaction() {
                   <div key={idx} className="flex items-center gap-3 text-xs" style={{ opacity: isDone ? 1 : isCurrent ? 1 : 0.4 }}>
                     <div style={{
                       width: 20, height: 20, borderRadius: '50%',
-                      background: isDone ? 'var(--risk-low)' : isCurrent ? 'var(--pink-primary)' : 'rgba(255,255,255,0.1)',
-                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', flexShrink: 0
+                      background: isDone ? 'var(--risk-low)' : isCurrent ? 'var(--yellow-primary)' : 'rgba(255, 255, 255, 0.1)',
+                      color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', flexShrink: 0
                     }}>
                       {isDone ? <CheckCircle2 size={12} /> : isCurrent ? <Loader2 size={10} className="animate-spin" /> : idx + 1}
                     </div>
@@ -519,7 +528,7 @@ export default function AnalyseTransaction() {
       <div className="card mb-6" style={{ background: 'var(--bg-card-subtle)' }}>
         <div className="card-header pb-2">
           <div className="card-title flex items-center gap-2">
-            <Play size={16} color="var(--pink-light)" />
+            <Play size={16} color="var(--yellow-light)" />
             <span>Pre-Configured Viva Test Cases</span>
           </div>
           <span className="text-xs text-tertiary">Quick load student test scenarios</span>
@@ -546,7 +555,7 @@ export default function AnalyseTransaction() {
 
           <button
             className="btn btn-secondary flex-col p-3 text-left"
-            style={{ border: '1px solid var(--pink-border)', background: 'rgba(236,72,153,0.08)' }}
+            style={{ border: '1px solid var(--yellow-border)', background: 'rgba(250, 204, 21, 0.08)' }}
             onClick={() => handleQuickPreset('p13_autopay')}
           >
             <span className="font-semibold text-xs text-pink">Pattern 13 Test Case</span>
@@ -562,7 +571,7 @@ export default function AnalyseTransaction() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.85)',
+            background: 'rgba(0, 0, 0, 0.85)',
             backdropFilter: 'blur(6px)',
             display: 'flex',
             alignItems: 'center',
@@ -576,22 +585,22 @@ export default function AnalyseTransaction() {
             style={{
               maxWidth: 600,
               width: '100%',
-              border: '2px solid #ef4444',
-              boxShadow: '0 12px 40px rgba(239,68,68,0.3)',
-              background: 'linear-gradient(180deg, #1e0b12 0%, #11060a 100%)',
+              border: '2px solid #facc15',
+              boxShadow: '0 12px 40px rgba(250, 204, 21, 0.3)',
+              background: '#000000',
               padding: '1.75rem',
             }}
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-2 text-danger">
-                <ShieldAlert size={26} color="#ef4444" />
+                <ShieldAlert size={26} color="#facc15" />
                 <h3 className="m-0 text-white font-bold text-lg">
                   {detectedDetails.length === 1 ? 'Suspicious Fraud Pattern Detected!' : `${detectedDetails.length} Suspicious Patterns Detected!`}
                 </h3>
               </div>
               <button
                 onClick={() => setShowPatternModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#999', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: '#999999', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -607,8 +616,8 @@ export default function AnalyseTransaction() {
                   key={idx}
                   className="p-3"
                   style={{
-                    background: 'rgba(239,68,68,0.1)',
-                    borderLeft: '4px solid #ef4444',
+                    background: 'rgba(250, 204, 21, 0.1)',
+                    borderLeft: '4px solid #facc15',
                     borderRadius: 6,
                   }}
                 >
@@ -621,7 +630,7 @@ export default function AnalyseTransaction() {
               ))}
             </div>
 
-            <div className="p-3 mb-4" style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="p-3 mb-4" style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <div className="text-xs text-tertiary">
                 <strong>Recommended Action:</strong> Review all transaction details below and do NOT authorize any unrecognized payment or AutoPay mandate.
               </div>
@@ -644,12 +653,12 @@ export default function AnalyseTransaction() {
             <div
               className="card mb-6"
               style={{
-                border: '2px solid #ef4444',
-                background: 'linear-gradient(90deg, rgba(239,68,68,0.15) 0%, rgba(236,72,153,0.1) 100%)',
+                border: '2px solid #facc15',
+                background: 'rgba(250, 204, 21, 0.15)',
               }}
             >
               <div className="flex items-start gap-3">
-                <ShieldAlert size={26} color="#ef4444" style={{ flexShrink: 0, marginTop: 2 }} />
+                <ShieldAlert size={26} color="#facc15" style={{ flexShrink: 0, marginTop: 2 }} />
                 <div style={{ flex: 1 }}>
                   <div className="font-bold text-base text-white mb-1">
                     ⚠ Warning: {detectedDetails.length} Suspicious Pattern(s) Identified
@@ -674,8 +683,8 @@ export default function AnalyseTransaction() {
             className="card mb-6 text-center"
             style={{
               border: `2px solid ${badgeColor}`,
-              background: 'linear-gradient(180deg, #1c1024 0%, #110918 100%)',
-              boxShadow: `0 8px 30px ${level === 'LOW' ? 'rgba(16,185,129,0.15)' : 'rgba(236,72,153,0.2)'}`,
+              background: '#000000',
+              boxShadow: `0 8px 30px ${level === 'LOW' ? 'rgba(250, 204, 21, 0.15)' : 'rgba(250, 204, 21, 0.2)'}`,
               padding: '2rem',
             }}
           >
@@ -729,10 +738,10 @@ export default function AnalyseTransaction() {
           </div>
 
           {/* ── SECTION A: DETECTED SUSPICIOUS / FRAUD PATTERNS ── */}
-          <div className="card mb-6" style={{ border: detectedDetails.length > 0 ? '1px solid #ef4444' : '1px solid var(--border-subtle)' }}>
+          <div className="card mb-6" style={{ border: detectedDetails.length > 0 ? '1px solid #facc15' : '1px solid var(--border-subtle)' }}>
             <div className="card-header">
               <div className="card-title flex items-center gap-2">
-                <AlertTriangle size={18} color={detectedDetails.length > 0 ? '#ef4444' : 'var(--risk-low)'} />
+                <AlertTriangle size={18} color={detectedDetails.length > 0 ? '#facc15' : 'var(--risk-low)'} />
                 <span>Detected Suspicious / Fraud Patterns ({detectedDetails.length})</span>
               </div>
               {detectedDetails.length > 0 ? (
@@ -743,7 +752,7 @@ export default function AnalyseTransaction() {
             </div>
 
             {detectedDetails.length === 0 ? (
-              <div className="p-4 text-center" style={{ background: 'rgba(16,185,129,0.06)', borderRadius: 8 }}>
+              <div className="p-4 text-center" style={{ background: 'rgba(250, 204, 21, 0.06)', borderRadius: 8 }}>
                 <CheckCircle2 size={24} color="var(--risk-low)" className="mx-auto mb-2" />
                 <div className="font-semibold text-sm text-emerald-400">Zero Suspicious Patterns Triggered</div>
                 <div className="text-xs text-tertiary mt-1">This transaction complies with all evaluated baseline behavioral thresholds.</div>
@@ -755,14 +764,14 @@ export default function AnalyseTransaction() {
                     key={idx}
                     className="p-3.5"
                     style={{
-                      background: 'rgba(239,68,68,0.08)',
+                      background: 'rgba(250, 204, 21, 0.08)',
                       borderRadius: 8,
-                      borderLeft: '4px solid #ef4444',
+                      borderLeft: '4px solid #facc15',
                     }}
                   >
                     <div className="flex justify-between items-center mb-1">
                       <div className="font-bold text-sm text-pink flex items-center gap-2">
-                        <AlertCircle size={15} color="#ef4444" />
+                        <AlertCircle size={15} color="#facc15" />
                         <span>{item.name}</span>
                       </div>
                       <span className="badge badge-high text-xs">+{item.contribution} Risk Score</span>
@@ -797,12 +806,12 @@ export default function AnalyseTransaction() {
                   style={{
                     background: 'var(--bg-card-subtle)',
                     borderRadius: 8,
-                    borderLeft: pat.status?.includes('Insufficient') ? '3px solid #f59e0b' : '3px solid rgba(16,185,129,0.4)',
+                    borderLeft: pat.status?.includes('Insufficient') ? '3px solid #facc15' : '3px solid rgba(250, 204, 21, 0.4)',
                   }}
                 >
                   <div style={{ flex: 1 }}>
                     <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle2 size={14} color={pat.status?.includes('Insufficient') ? '#f59e0b' : '#10b981'} />
+                      <CheckCircle2 size={14} color={pat.status?.includes('Insufficient') ? '#facc15' : '#facc15'} />
                       <span className="font-semibold text-xs text-secondary">{pat.name}</span>
                       <span className={`badge ${pat.status?.includes('Insufficient') ? 'badge-medium' : 'badge-low'}`} style={{ fontSize: '0.65rem' }}>
                         {pat.status || 'Not Detected'}
@@ -821,7 +830,7 @@ export default function AnalyseTransaction() {
           <div className="card mb-6">
             <div className="card-header">
               <div className="card-title flex items-center gap-2">
-                <Info size={16} color="var(--pink-light)" />
+                <Info size={16} color="var(--yellow-light)" />
                 <span>Why the Transaction Received this Score?</span>
               </div>
               <span className="text-xs text-tertiary font-mono">XAI Feature Contributions</span>
@@ -854,14 +863,14 @@ export default function AnalyseTransaction() {
           </div>
 
           {/* ── SECTION D: WHAT NEXT? RECOMMENDATION ── */}
-          <div className="card mb-6" style={{ border: '1px solid var(--pink-border)' }}>
+          <div className="card mb-6" style={{ border: '1px solid var(--yellow-border)' }}>
             <div className="card-header">
               <div className="card-title flex items-center gap-2">
-                <Lock size={16} color="var(--pink-light)" />
+                <Lock size={16} color="var(--yellow-light)" />
                 <span>What Next? (Actionable Security Guidance)</span>
               </div>
             </div>
-            <div className="p-4" style={{ background: 'rgba(236,72,153,0.06)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="p-4" style={{ background: 'rgba(250, 204, 21, 0.06)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <p className="text-sm font-semibold text-secondary leading-relaxed mb-3">
                 {analysisResult.recommendation}
               </p>
@@ -873,8 +882,8 @@ export default function AnalyseTransaction() {
             </div>
 
             {/* Security Alert Reminder */}
-            <div className="mt-4 p-3 flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.1)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)' }}>
-              <ShieldAlert size={16} color="#ef4444" style={{ flexShrink: 0 }} />
+            <div className="mt-4 p-3 flex items-center gap-2" style={{ background: 'rgba(250, 204, 21, 0.1)', borderRadius: 8, border: '1px solid rgba(250, 204, 21, 0.25)' }}>
+              <ShieldAlert size={16} color="#facc15" style={{ flexShrink: 0 }} />
               <div className="text-xs text-secondary">
                 <strong>Critical Security Rule:</strong> UPI PIN is ONLY entered to SEND or DEDUCT money. Entering a UPI PIN will never receive money.
               </div>

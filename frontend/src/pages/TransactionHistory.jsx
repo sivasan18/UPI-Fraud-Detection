@@ -5,13 +5,13 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  History, Search, Eye, Trash2, Plus, ArrowUpDown, ChevronLeft, ChevronRight
+  History, Search, Eye, Trash2, Plus, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function TransactionHistory() {
   const navigate = useNavigate();
-  const { currentMode, transactions, deleteTransaction, setCurrentTransaction, setCurrentAnalysis } = useApp();
+  const { currentMode, databaseBackend, transactions, deleteTransaction, setCurrentTransaction, setCurrentAnalysis } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRisk, setFilterRisk] = useState('ALL');
@@ -58,7 +58,7 @@ export default function TransactionHistory() {
   };
 
   const handleDelete = async (txnId) => {
-    if (window.confirm('Are you sure you want to delete this transaction from SQLite?')) {
+    if (window.confirm(`Are you sure you want to delete this transaction from ${databaseBackend}?`)) {
       await deleteTransaction(txnId);
     }
   };
@@ -70,7 +70,7 @@ export default function TransactionHistory() {
           <h1>Transaction History</h1>
           <p>
             {currentMode === 'ACTIVE'
-              ? 'Local SQLite database records for active verified transactions.'
+              ? `Verified transactions stored in ${databaseBackend}.`
               : 'Synthetic benchmark transaction dataset in Demo Mode.'}
           </p>
         </div>
@@ -193,7 +193,7 @@ export default function TransactionHistory() {
                             onClick={() => handleDelete(txn.id || txn.transaction_id)}
                             title="Delete Record"
                           >
-                            <Trash2 size={14} color="#f43f5e" />
+                            <Trash2 size={14} color="#facc15" />
                           </button>
                         </div>
                       </td>
@@ -205,7 +205,7 @@ export default function TransactionHistory() {
           </div>
 
           {/* Pagination Bar */}
-          <div className="flex justify-between items-center p-4" style={{ background: 'var(--bg-card-subtle)', borderTop: '1px solid var(--pink-border)' }}>
+          <div className="flex justify-between items-center p-4" style={{ background: 'var(--bg-card-subtle)', borderTop: '1px solid var(--yellow-border)' }}>
             <div className="text-xs text-tertiary font-mono">
               Showing {(currentPage - 1) * itemsPerPage + 1} – {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} records
             </div>

@@ -4,16 +4,15 @@
 // ==============================================================================
 import React from 'react';
 import {
-  FileText, Download, ShieldCheck, AlertTriangle, Printer,
-  BarChart2, Calendar, Database
+  Download, Printer, Database
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function Reports() {
   const {
     currentMode,
+    databaseBackend,
     totalTransactions,
-    validTransactions,
     suspiciousTransactions,
     highRiskTransactions,
     avgRiskScore,
@@ -58,7 +57,7 @@ export default function Reports() {
           <h1>System Security & Audit Report</h1>
           <p>
             {currentMode === 'ACTIVE'
-              ? 'Report generated from locally stored transaction data.'
+              ? `Report generated from ${databaseBackend} transaction data.`
               : 'Report generated from synthetic demonstration data.'}
           </p>
         </div>
@@ -78,7 +77,7 @@ export default function Reports() {
         <div>
           <strong>Report Scope: {currentMode} MODE</strong> —{' '}
           {currentMode === 'ACTIVE'
-            ? 'This report summarizes all verified user transactions, behavioural baseline statistics, and anomalies stored in your local SQLite database.'
+            ? `This report summarizes verified transactions and behavioural statistics stored in ${databaseBackend}.`
             : 'This report summarizes synthetic evaluation benchmarks for academic review and model validation.'}
         </div>
       </div>
@@ -87,8 +86,8 @@ export default function Reports() {
       <div className="grid grid-4 mb-6">
         <div className="card">
           <div className="stat-label">Total Volume Monitored</div>
-          <div className="stat-value text-violet">{totalTransactions} Transactions</div>
-          <div className="text-xs text-tertiary mt-2 font-mono">SQLite Partition: {currentMode}</div>
+          <div className="stat-value text-pink">{totalTransactions} Transactions</div>
+          <div className="text-xs text-tertiary mt-2 font-mono">{databaseBackend} • {currentMode}</div>
         </div>
 
         <div className="card">
@@ -107,7 +106,7 @@ export default function Reports() {
 
         <div className="card">
           <div className="stat-label">Average Risk Index</div>
-          <div className="stat-value text-violet">
+          <div className="stat-value text-pink">
             {avgRiskScore !== null ? `${avgRiskScore}/100` : '—'}
           </div>
           <div className="text-xs text-tertiary mt-2 font-mono">Baseline Risk Score</div>
@@ -118,7 +117,7 @@ export default function Reports() {
       <div className="card mb-6">
         <div className="card-header">
           <div className="card-title">Executive Summary</div>
-          <span className="badge badge-violet">{currentMode} Data</span>
+          <span className="badge badge-pink">{currentMode} Data</span>
         </div>
         <div className="text-sm text-secondary leading-relaxed">
           <p className="mb-3">
@@ -164,7 +163,7 @@ export default function Reports() {
                   <tr key={t.id || idx}>
                     <td className="text-xs font-mono">{t.date} {t.time}</td>
                     <td className="font-semibold text-sm">{t.receiver}</td>
-                    <td className="font-mono text-violet font-bold text-sm">₹{Number(t.amount).toLocaleString()}</td>
+                    <td className="font-mono text-pink font-bold text-sm">₹{Number(t.amount).toLocaleString()}</td>
                     <td>
                       <span className={`badge badge-${(t.risk_level || t.riskLevel || 'LOW').toLowerCase()}`}>
                         {t.risk_score || t.riskScore || 10}/100

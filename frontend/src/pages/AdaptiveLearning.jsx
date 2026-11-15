@@ -4,14 +4,13 @@
 // ==============================================================================
 import React, { useState } from 'react';
 import {
-  Brain, CheckCircle, RefreshCw, PlusCircle, ArrowRight,
-  Database, ShieldCheck, Activity, Loader2
+  Brain, CheckCircle, RefreshCw, PlusCircle, Loader2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import api from '../services/api';
 
 export default function AdaptiveLearning() {
-  const { currentMode, validatedSamples, addValidatedSample, refreshData, transactions } = useApp();
+  const { currentMode, databaseBackend, validatedSamples, addValidatedSample, refreshData, transactions } = useApp();
   const [selectedTxnId, setSelectedTxnId] = useState('');
   const [label, setLabel] = useState('fraud');
   const [notes, setNotes] = useState('');
@@ -27,6 +26,7 @@ export default function AdaptiveLearning() {
   };
 
   const handleRetrain = async () => {
+    if (currentMode !== 'DEMO') return;
     setIsRetraining(true);
     setRetrainSuccess('');
     try {
@@ -50,9 +50,9 @@ export default function AdaptiveLearning() {
       </div>
 
       {/* Adaptive Learning Workflow Card */}
-      <div className="card mb-6" style={{ background: 'var(--violet-card-gradient)', border: '1px solid var(--violet-border)' }}>
+      <div className="card mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--yellow-border)' }}>
         <div className="card-title mb-3 flex items-center gap-2">
-          <Brain size={20} color="var(--violet-bright)" />
+          <Brain size={20} color="var(--yellow-bright)" />
           Continuous Adaptive Learning Pipeline
         </div>
         <p className="text-xs text-secondary mb-4">
@@ -60,22 +60,22 @@ export default function AdaptiveLearning() {
         </p>
 
         <div className="grid grid-4" style={{ gap: 10 }}>
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--violet-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs font-mono text-tertiary">Step 1</div>
             <div className="font-semibold text-xs mt-1">Suspicious Flag</div>
             <div className="text-xs text-tertiary mt-1">Model scores anomaly</div>
           </div>
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--violet-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs font-mono text-tertiary">Step 2</div>
             <div className="font-semibold text-xs mt-1">Human Validation</div>
             <div className="text-xs text-tertiary mt-1">User confirms label</div>
           </div>
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--violet-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs font-mono text-tertiary">Step 3</div>
-            <div className="font-semibold text-xs mt-1">SQLite Training Pool</div>
-            <div className="text-xs text-tertiary mt-1">Samples stored locally</div>
+            <div className="font-semibold text-xs mt-1">Feedback Pool</div>
+            <div className="text-xs text-tertiary mt-1">Stored in {databaseBackend}</div>
           </div>
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--violet-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs font-mono text-tertiary">Step 4</div>
             <div className="font-semibold text-xs mt-1">Model Retraining</div>
             <div className="text-xs text-tertiary mt-1">Updated weights active</div>
@@ -96,18 +96,23 @@ export default function AdaptiveLearning() {
           <div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Accumulated Validated Feedback Pool</h3>
             <p className="text-xs text-secondary mt-1">
-              Currently holding <strong>{validatedSamples.length} validated ground-truth samples</strong> in local SQLite.
+              Currently holding <strong>{validatedSamples.length} validated feedback labels</strong> in {databaseBackend}.
             </p>
           </div>
           <button
             className="btn btn-primary"
             onClick={handleRetrain}
-            disabled={isRetraining || validatedSamples.length === 0}
+            disabled={currentMode !== 'DEMO' || isRetraining || validatedSamples.length === 0}
           >
             {isRetraining ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
-            {isRetraining ? 'Retraining Model...' : 'Retrain Model Now'}
+            {isRetraining ? 'Refreshing Demo Metrics...' : currentMode === 'DEMO' ? 'Refresh Demo Metrics' : 'Rule Engine — No Model Training'}
           </button>
         </div>
+        {currentMode === 'ACTIVE' && (
+          <p className="text-xs text-tertiary mt-3">
+            Active Mode keeps the 13-pattern rule engine fixed. Feedback labels are stored for review and do not alter its scoring.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-2 mb-6">
@@ -115,7 +120,7 @@ export default function AdaptiveLearning() {
         <div className="card">
           <div className="card-header">
             <div className="card-title flex items-center gap-2">
-              <PlusCircle size={18} color="var(--violet-bright)" />
+              <PlusCircle size={18} color="var(--yellow-bright)" />
               Submit Validated Ground-Truth Label
             </div>
           </div>
@@ -171,7 +176,7 @@ export default function AdaptiveLearning() {
         <div className="card">
           <div className="card-header">
             <div className="card-title">Validated Feedback Samples</div>
-            <span className="badge badge-violet">{validatedSamples.length} Samples</span>
+            <span className="badge badge-pink">{validatedSamples.length} Samples</span>
           </div>
 
           {validatedSamples.length === 0 ? (
@@ -181,7 +186,7 @@ export default function AdaptiveLearning() {
           ) : (
             <div className="flex flex-col gap-2.5" style={{ maxHeight: 300, overflowY: 'auto' }}>
               {validatedSamples.map(sample => (
-                <div key={sample.id} className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--violet-border)' }}>
+                <div key={sample.id} className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
                   <div className="flex justify-between items-center text-xs mb-1">
                     <span className="font-mono text-tertiary">Txn ID: {sample.transaction_id}</span>
                     <span className={`badge ${sample.label === 'fraud' ? 'badge-critical' : 'badge-low'}`}>

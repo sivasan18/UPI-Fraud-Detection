@@ -12,17 +12,17 @@ import {
 import { useApp } from '../context/AppContext';
 
 const APP_BADGES = {
-  bhim: { name: 'BHIM UPI', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.35)' },
-  phonepe: { name: 'PhonePe', color: '#a855f7', bg: 'rgba(168, 85, 247, 0.12)', border: 'rgba(168, 85, 247, 0.35)' },
-  googlepay: { name: 'Google Pay', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.12)', border: 'rgba(56, 189, 248, 0.35)' },
-  unknown: { name: 'General UPI Receipt', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.12)', border: 'rgba(148, 163, 184, 0.35)' },
+  bhim: { name: 'BHIM UPI', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
+  phonepe: { name: 'PhonePe', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
+  googlepay: { name: 'Google Pay', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
+  unknown: { name: 'General UPI Receipt', color: '#a1a1a1', bg: 'rgba(161, 161, 161, 0.12)', border: 'rgba(161, 161, 161, 0.35)' },
 };
 
 const CONFIDENCE_STYLES = {
-  High: { color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)' },
-  Medium: { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)' },
-  Low: { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)' },
-  Uncertain: { color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.12)', border: 'rgba(148, 163, 184, 0.3)' },
+  High: { color: '#facc15', bg: 'rgba(250, 204, 21, 0.15)', border: 'rgba(250, 204, 21, 0.4)' },
+  Medium: { color: '#facc15', bg: 'rgba(250, 204, 21, 0.15)', border: 'rgba(250, 204, 21, 0.4)' },
+  Low: { color: '#facc15', bg: 'rgba(250, 204, 21, 0.15)', border: 'rgba(250, 204, 21, 0.4)' },
+  Uncertain: { color: '#a1a1a1', bg: 'rgba(161, 161, 161, 0.12)', border: 'rgba(161, 161, 161, 0.3)' },
 };
 
 export default function OCRExtraction() {
@@ -46,21 +46,25 @@ export default function OCRExtraction() {
     remarks: '',
     debitedAccount: '',
     bank: '',
-    paymentMode: 'UPI',
-    paymentInstrument: 'Bank account',
-    status: 'Successful',
-    confidence: 95,
+    paymentMode: '',
+    paymentInstrument: '',
+    status: '',
+    confidence: 0,
     fieldConfidences: {
-      amount: 'High',
-      recipient: 'High',
-      transaction_id: 'High',
-      date_time: 'High',
-      upi_id: 'High',
-      remarks: 'High',
+      amount: 'Uncertain',
+      recipient: 'Uncertain',
+      transaction_id: 'Uncertain',
+      date_time: 'Uncertain',
+      upi_id: 'Uncertain',
+      remarks: 'Uncertain',
     },
   });
 
   useEffect(() => {
+    if (!ocrResult?.extracted) {
+      navigate('/upload', { replace: true });
+      return undefined;
+    }
     if (ocrResult?.extracted) {
       const ext = ocrResult.extracted;
 
@@ -79,8 +83,8 @@ export default function OCRExtraction() {
 
       setFields({
         amount: ext.amount != null ? String(ext.amount) : '',
-        date: ext.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        time: ext.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        date: ext.date || '',
+        time: ext.time || '',
         recipient: ext.receiver || '',
         upiId: ext.receiver_upi || '',
         senderUpi: ext.sender_upi || '',
@@ -89,17 +93,17 @@ export default function OCRExtraction() {
         remarks: ext.remarks || '',
         debitedAccount: ext.debited_account || '',
         bank: ext.bank || '',
-        paymentMode: ext.payment_mode || 'UPI',
-        paymentInstrument: ext.payment_instrument || 'Bank account',
-        status: ext.status || 'Successful',
-        confidence: ext.confidence || 85,
+        paymentMode: ext.payment_mode || '',
+        paymentInstrument: ext.payment_instrument || '',
+        status: ext.status || '',
+        confidence: ext.confidence ?? 0,
         fieldConfidences: ext.field_confidences || {
           amount: ext.amount ? 'High' : 'Uncertain',
           recipient: ext.receiver ? 'High' : 'Uncertain',
           transaction_id: ext.transaction_id ? 'High' : 'Uncertain',
           date_time: ext.date ? 'High' : 'Uncertain',
           upi_id: ext.receiver_upi ? 'High' : 'Uncertain',
-          remarks: ext.remarks ? 'High' : 'Medium',
+          remarks: ext.remarks ? 'High' : 'Uncertain',
         },
       });
     }
@@ -113,7 +117,7 @@ export default function OCRExtraction() {
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [ocrResult]);
+  }, [ocrResult, navigate]);
 
   const handleFieldChange = (key, val) => {
     setFields(prev => ({ ...prev, [key]: val }));
@@ -125,15 +129,11 @@ export default function OCRExtraction() {
       id: `ocr-${Date.now()}`,
       amount: rawAmt,
       date: fields.date,
-      date_iso: new Date().toISOString().split('T')[0],
       time: fields.time,
-      hour: 10,
-      minute: 42,
-      sender: 'Local User',
-      sender_upi: fields.senderUpi || 'user@upi',
+      sender_upi: fields.senderUpi,
       receiver: fields.recipient,
       receiver_upi: fields.upiId,
-      transaction_id: fields.transactionId || fields.utr || `TXN${Date.now()}`,
+      transaction_id: fields.transactionId || fields.utr,
       utr: fields.utr,
       remarks: fields.remarks,
       debited_account: fields.debitedAccount,
@@ -142,8 +142,6 @@ export default function OCRExtraction() {
       payment_instrument: fields.paymentInstrument,
       status: fields.status,
       merchant: fields.recipient,
-      location: 'Localhost / Device',
-      device: 'Mobile UPI App',
       source_type: 'screenshot',
       validated: false,
     };
@@ -180,31 +178,31 @@ export default function OCRExtraction() {
       </div>
 
       {/* Progress Step Pipeline */}
-      <div className="card mb-6" style={{ background: 'var(--bg-card-subtle)', border: '1px solid var(--pink-border)' }}>
+      <div className="card mb-6" style={{ background: 'var(--bg-card-subtle)', border: '1px solid var(--yellow-border)' }}>
         <div className="flex justify-between items-center flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 1 ? 'var(--pink-primary)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.75rem', fontWeight: 700 }}>
+            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 1 ? 'var(--yellow-primary)' : 'rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700 }}>
               1
             </div>
             <span className="text-xs text-secondary">Upload Received</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 2 ? 'var(--pink-primary)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.75rem', fontWeight: 700 }}>
+            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 2 ? 'var(--yellow-primary)' : 'rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700 }}>
               {step === 2 ? <Loader2 size={12} className="animate-spin" /> : '2'}
             </div>
             <span className="text-xs text-secondary">App Detected</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 3 ? 'var(--pink-primary)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.75rem', fontWeight: 700 }}>
+            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 3 ? 'var(--yellow-primary)' : 'rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700 }}>
               3
             </div>
             <span className="text-xs text-secondary">Layout Region OCR</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 4 ? '#10b981' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.75rem', fontWeight: 700 }}>
+            <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 4 ? '#facc15' : 'rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700 }}>
               {step >= 4 ? <CheckCircle size={14} /> : '4'}
             </div>
             <span className="text-xs text-secondary font-semibold">User Verification</span>
@@ -241,7 +239,7 @@ export default function OCRExtraction() {
               <span style={{
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                background: 'rgba(0,0,0,0.3)',
+                background: 'rgba(0, 0, 0, 0.3)',
                 padding: '4px 10px',
                 borderRadius: 6,
                 color: currentBadge.color,
@@ -254,7 +252,7 @@ export default function OCRExtraction() {
 
           <div className="card-header" style={{ marginBottom: 16 }}>
             <div className="card-title flex items-center gap-2">
-              <FileCheck size={18} color="var(--pink-light)" />
+              <FileCheck size={18} color="var(--yellow-light)" />
               Extracted Transaction Information
             </div>
             <button
@@ -268,11 +266,11 @@ export default function OCRExtraction() {
           {/* Manual entry fallback notice if needed */}
           {needsManualEntry && (
             <div className="notice-box mb-4" style={{
-              background: 'rgba(245,158,11,0.08)',
-              border: '1px solid rgba(245,158,11,0.3)',
+              background: 'rgba(250, 204, 21, 0.08)',
+              border: '1px solid rgba(250, 204, 21, 0.3)',
               borderRadius: 8,
             }}>
-              <AlertCircle size={16} color="#f59e0b" style={{ flexShrink: 0 }} />
+              <AlertCircle size={16} color="#facc15" style={{ flexShrink: 0 }} />
               <div className="text-sm text-secondary">
                 <strong>OCR note:</strong> Some fields could not be cleanly read from the screenshot. Please enter them manually before proceeding.
               </div>
@@ -282,7 +280,7 @@ export default function OCRExtraction() {
           {/* Fields Grid */}
           <div className="grid grid-2 mb-6" style={{ gap: 16 }}>
             {/* Amount */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">Transaction Amount (₹)</label>
                 {renderConfidenceBadge(fields.fieldConfidences?.amount)}
@@ -300,7 +298,7 @@ export default function OCRExtraction() {
             </div>
 
             {/* Recipient / Merchant */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">Recipient / Merchant / Banking Name</label>
                 {renderConfidenceBadge(fields.fieldConfidences?.recipient)}
@@ -318,7 +316,7 @@ export default function OCRExtraction() {
             </div>
 
             {/* Transaction ID / UTR */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">Transaction ID / UTR</label>
                 {renderConfidenceBadge(fields.fieldConfidences?.transaction_id)}
@@ -336,7 +334,7 @@ export default function OCRExtraction() {
             </div>
 
             {/* Date & Time */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">Date & Time</label>
                 {renderConfidenceBadge(fields.fieldConfidences?.date_time)}
@@ -364,7 +362,7 @@ export default function OCRExtraction() {
             </div>
 
             {/* To UPI ID */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">To UPI ID / Recipient UPI ID</label>
                 {renderConfidenceBadge(fields.fieldConfidences?.upi_id)}
@@ -382,7 +380,7 @@ export default function OCRExtraction() {
             </div>
 
             {/* From UPI ID */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">From UPI ID</label>
                 {renderConfidenceBadge(fields.senderUpi ? 'High' : 'Uncertain')}
@@ -400,7 +398,7 @@ export default function OCRExtraction() {
             </div>
 
             {/* Remarks / Purpose */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">Remarks / Payment Purpose</label>
                 {renderConfidenceBadge(fields.fieldConfidences?.remarks)}
@@ -418,7 +416,7 @@ export default function OCRExtraction() {
             </div>
 
             {/* Debited Account & Bank */}
-            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+            <div className="form-group" style={{ background: 'var(--bg-card-subtle)', padding: 12, borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center mb-1">
                 <label className="form-label mb-0">Bank / Debited Account</label>
                 {renderConfidenceBadge(fields.debitedAccount || fields.bank ? 'High' : 'Uncertain')}
@@ -441,17 +439,17 @@ export default function OCRExtraction() {
           {/* Real Confidence Summary Table */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid var(--pink-border)',
+            border: '1px solid var(--yellow-border)',
             borderRadius: 8,
             padding: '14px 18px',
             marginBottom: 24,
           }}>
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} color="var(--pink-light)" />
+                <Sparkles size={16} color="var(--yellow-light)" />
                 <strong style={{ fontSize: '0.9rem' }}>Field-Level OCR Confidence</strong>
               </div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pink-light)' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--yellow-light)' }}>
                 Overall Accuracy: {fields.confidence}%
               </div>
             </div>
@@ -480,7 +478,7 @@ export default function OCRExtraction() {
 
           {/* Next Step Notice */}
           <div className="notice-box info mb-6" style={{ padding: '10px 14px' }}>
-            <ShieldCheck size={16} color="var(--pink-light)" style={{ flexShrink: 0 }} />
+            <ShieldCheck size={16} color="var(--yellow-light)" style={{ flexShrink: 0 }} />
             <div className="text-xs text-secondary">
               <strong>Verification Step:</strong> The transaction is NOT saved yet. Review the details above, edit any values if needed, and click below to confirm and proceed to fraud risk analysis.
             </div>

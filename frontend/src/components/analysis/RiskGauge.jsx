@@ -13,16 +13,16 @@ export default function RiskGauge({ score = 15, size = 180 }) {
   const arcLength = circumference * (240 / 360);
   const strokeDashoffset = arcLength - (s / 100) * arcLength;
 
-  let color = '#10b981';
+  let color = '#facc15';
   let level = 'LOW';
   if (s >= 80) {
-    color = '#e11d48';
+    color = '#facc15';
     level = 'CRITICAL';
   } else if (s >= 60) {
-    color = '#f43f5e';
+    color = '#facc15';
     level = 'HIGH';
   } else if (s >= 30) {
-    color = '#f59e0b';
+    color = '#facc15';
     level = 'MEDIUM';
   }
 
@@ -56,7 +56,7 @@ export default function RiskGauge({ score = 15, size = 180 }) {
       </svg>
 
       <div style={{ position: 'absolute', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#fff', lineHeight: 1, fontFamily: 'monospace' }}>
+        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#ffffff', lineHeight: 1, fontFamily: 'monospace' }}>
           {s}
         </div>
         <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>

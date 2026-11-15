@@ -2,7 +2,7 @@
 // UPI Fraud Detection and Risk Assessment System
 // Verify Extracted Data & Save Confirmation Page
 // ==============================================================================
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ShieldCheck, Edit3, ArrowRight, Database, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -13,27 +13,32 @@ export default function DataConfirmation() {
   const [confirmed, setConfirmed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const txn = currentTransaction || {
-    amount: 4000,
-    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    time: '10:42 AM',
-    receiver: 'ABC Stores',
-    receiver_upi: 'abcstores@upi',
-    transaction_id: `TXN${Math.floor(100000000 + Math.random() * 900000000)}`,
-    status: 'Successful',
-    category: 'Shopping',
-    location: 'Localhost',
-    device: 'Local Client',
-  };
+  useEffect(() => {
+    if (!currentTransaction) navigate('/upload', { replace: true });
+  }, [currentTransaction, navigate]);
 
-  const [editableTxn, setEditableTxn] = useState({ ...txn });
+  const [editableTxn, setEditableTxn] = useState({
+    amount: '',
+    date: '',
+    time: '',
+    receiver: '',
+    receiver_upi: '',
+    transaction_id: '',
+    ...(currentTransaction || {}),
+  });
 
   const handleFieldChange = (key, value) => {
     setEditableTxn(prev => ({ ...prev, [key]: value }));
   };
 
   const handleConfirmAndSave = async () => {
+    setSaveError('');
+    if (!Number.isFinite(Number(editableTxn.amount)) || Number(editableTxn.amount) <= 0 || !editableTxn.receiver?.trim()) {
+      setSaveError('Enter a valid amount and recipient before saving.');
+      return;
+    }
     setIsSaving(true);
     const finalTxn = {
       ...editableTxn,
@@ -44,6 +49,10 @@ export default function DataConfirmation() {
     const res = await confirmAndSaveTransaction(finalTxn);
     setIsSaving(false);
 
+    if (!res?.success) {
+      setSaveError(res?.detail || 'Could not save this transaction.');
+      return;
+    }
     if (res && res.analysis && res.analysis.score >= 60) {
       navigate('/suspicious');
     } else {
@@ -61,7 +70,7 @@ export default function DataConfirmation() {
       <div className="card mb-6">
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <ShieldCheck size={18} color="var(--pink-light)" />
+            <ShieldCheck size={18} color="var(--yellow-light)" />
             Extracted Fields Review
           </div>
           <button
@@ -75,7 +84,7 @@ export default function DataConfirmation() {
         {/* Missing field prompt notice */}
         {(!editableTxn.amount || !editableTxn.receiver) && (
           <div className="notice-box info mb-4" style={{ padding: '0.65rem 0.9rem' }}>
-            <AlertCircle size={16} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
+            <AlertCircle size={16} color="#facc15" style={{ flexShrink: 0, marginTop: 2 }} />
             <div className="text-xs text-secondary">
               Could not read some fields automatically. Please enter them manually below.
             </div>
@@ -83,7 +92,7 @@ export default function DataConfirmation() {
         )}
 
         <div className="grid grid-2 mb-6">
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs text-tertiary">Amount (₹)</div>
             {isEditing ? (
               <input
@@ -94,11 +103,13 @@ export default function DataConfirmation() {
                 onChange={e => handleFieldChange('amount', e.target.value)}
               />
             ) : (
-              <div className="font-semibold text-xl font-mono text-pink">₹{Number(editableTxn.amount || 0).toLocaleString()}</div>
+              <div className="font-semibold text-xl font-mono text-pink">
+                {editableTxn.amount ? `₹${Number(editableTxn.amount).toLocaleString()}` : 'Not extracted'}
+              </div>
             )}
           </div>
 
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs text-tertiary">Recipient / Merchant</div>
             {isEditing ? (
               <input
@@ -112,7 +123,7 @@ export default function DataConfirmation() {
             )}
           </div>
 
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs text-tertiary">Recipient UPI ID</div>
             {isEditing ? (
               <input
@@ -126,7 +137,7 @@ export default function DataConfirmation() {
             )}
           </div>
 
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs text-tertiary">Transaction ID (Ref No)</div>
             {isEditing ? (
               <input
@@ -140,7 +151,7 @@ export default function DataConfirmation() {
             )}
           </div>
 
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs text-tertiary">Date</div>
             {isEditing ? (
               <input
@@ -150,11 +161,11 @@ export default function DataConfirmation() {
                 onChange={e => handleFieldChange('date', e.target.value)}
               />
             ) : (
-              <div className="text-sm text-secondary mt-1">{editableTxn.date}</div>
+              <div className="text-sm text-secondary mt-1">{editableTxn.date || 'Not extracted'}</div>
             )}
           </div>
 
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
             <div className="text-xs text-tertiary">Time</div>
             {isEditing ? (
               <input
@@ -164,19 +175,21 @@ export default function DataConfirmation() {
                 onChange={e => handleFieldChange('time', e.target.value)}
               />
             ) : (
-              <div className="text-sm text-secondary mt-1">{editableTxn.time}</div>
+              <div className="text-sm text-secondary mt-1">{editableTxn.time || 'Not extracted'}</div>
             )}
           </div>
         </div>
 
+        {saveError && <p className="text-danger text-sm mb-4" role="alert">{saveError}</p>}
+
         {/* User Confirmation Checkbox */}
-        <div className="mb-6 p-3" style={{ background: 'rgba(236,72,153,0.05)', borderRadius: 8, border: '1px solid var(--pink-border)' }}>
+        <div className="mb-6 p-3" style={{ background: 'rgba(250, 204, 21, 0.05)', borderRadius: 8, border: '1px solid var(--yellow-border)' }}>
           <label className="flex items-center gap-2 cursor-pointer text-xs text-secondary">
             <input
               type="checkbox"
               checked={confirmed}
               onChange={e => setConfirmed(e.target.checked)}
-              style={{ accentColor: 'var(--pink-primary)', width: 16, height: 16 }}
+              style={{ accentColor: 'var(--yellow-primary)', width: 16, height: 16 }}
             />
             <span>I verify that the above transaction details are correct and should be saved to the database.</span>
           </label>
@@ -192,7 +205,7 @@ export default function DataConfirmation() {
             onClick={handleConfirmAndSave}
           >
             <Database size={15} />
-            {isSaving ? 'Saving to SQLite...' : 'Confirm'}
+            {isSaving ? 'Saving…' : 'Save verified transaction'}
           </button>
         </div>
       </div>

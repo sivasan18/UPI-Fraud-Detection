@@ -1,11 +1,11 @@
 // ==============================================================================
 // UPI Fraud Detection and Risk Assessment System
-// How It Works — Full Workflow + 12 Fraud Patterns + Risk Tiers
+// How It Works — Full Workflow + 13 Fraud Patterns + Risk Tiers
 // ==============================================================================
 import React, { useState } from 'react';
 import {
   Upload, FileText, CheckCircle, Search, ShieldAlert,
-  ArrowDown, ArrowRight, ShieldCheck, AlertTriangle, Info,
+  ArrowDown, ArrowRight, ShieldCheck, Info,
   HelpCircle, Activity, Clock, Users, Zap, MapPin, Smartphone,
   TrendingUp, RefreshCw, BarChart2, Eye
 } from 'lucide-react';
@@ -15,44 +15,44 @@ const WORKFLOW_STEPS = [
   {
     step: 1,
     label: 'UPLOAD',
-    icon: <Upload size={20} color="var(--pink-light)" />,
+    icon: <Upload size={20} color="var(--yellow-light)" />,
     desc: 'Add a UPI screenshot or enter transaction details manually',
-    color: 'var(--pink-primary)',
+    color: 'var(--yellow-primary)',
   },
   {
     step: 2,
     label: 'DETECT APP',
-    icon: <Smartphone size={20} color="#8b5cf6" />,
+    icon: <Smartphone size={20} color="#facc15" />,
     desc: 'System identifies if screenshot is from BHIM, PhonePe, or GPay',
-    color: '#8b5cf6',
+    color: '#facc15',
   },
   {
     step: 3,
     label: 'EXTRACT',
-    icon: <FileText size={20} color="#f59e0b" />,
+    icon: <FileText size={20} color="#facc15" />,
     desc: 'OCR reads Amount, Recipient, TXN ID, Date/Time, UPI ID',
-    color: '#f59e0b',
+    color: '#facc15',
   },
   {
     step: 4,
     label: 'VERIFY',
-    icon: <CheckCircle size={20} color="#10b981" />,
-    desc: 'You confirm extracted details before saving to SQLite database',
-    color: '#10b981',
+    icon: <CheckCircle size={20} color="#facc15" />,
+    desc: 'You confirm extracted details before saving transaction fields',
+    color: '#facc15',
   },
   {
     step: 5,
     label: 'FRAUD ENGINE',
-    icon: <Search size={20} color="var(--pink-light)" />,
+    icon: <Search size={20} color="var(--yellow-light)" />,
     desc: 'Risk engine checks 13 behavioral patterns against your history',
-    color: 'var(--pink-primary)',
+    color: 'var(--yellow-primary)',
   },
   {
     step: 6,
     label: 'RESULT',
-    icon: <ShieldAlert size={20} color="#ef4444" />,
+    icon: <ShieldAlert size={20} color="#facc15" />,
     desc: 'Risk score (0–100) + which patterns triggered + clear "Why?" explanation',
-    color: '#ef4444',
+    color: '#facc15',
   },
 ];
 
@@ -64,7 +64,7 @@ const PATTERNS = [
     example: 'e.g. ₹1,000 at 9:00, 9:01 and 9:02',
     desc: 'Sending the exact same amount multiple times within 1–5 minutes. Common indicator of automated or scripted fraud.',
     contrib: 25,
-    color: '#ef4444',
+    color: '#facc15',
   },
   {
     id: 'P2',
@@ -73,7 +73,7 @@ const PATTERNS = [
     example: 'e.g. ₹100 → ₹200 → ₹400 → ₹800 to same person',
     desc: 'Amount to the same recipient roughly doubles each time. A known social-engineering escalation tactic.',
     contrib: 22,
-    color: '#f97316',
+    color: '#facc15',
   },
   {
     id: 'P3',
@@ -82,7 +82,7 @@ const PATTERNS = [
     example: 'e.g. 8 transactions in 3 minutes',
     desc: 'A sudden burst of many transactions in a very short time — far above your normal daily count.',
     contrib: 20,
-    color: '#f59e0b',
+    color: '#facc15',
   },
   {
     id: 'P4',
@@ -91,7 +91,7 @@ const PATTERNS = [
     example: 'e.g. Your avg is ₹500 but transaction is ₹15,000',
     desc: 'Transaction value significantly exceeds your normal average or maximum historical amount.',
     contrib: 28,
-    color: '#dc2626',
+    color: '#facc15',
   },
   {
     id: 'P5',
@@ -100,7 +100,7 @@ const PATTERNS = [
     example: 'e.g. First time sending ₹10,000 to an unknown person',
     desc: 'A first-time recipient combined with an unusually high amount — double the risk.',
     contrib: 25,
-    color: '#ef4444',
+    color: '#facc15',
   },
   {
     id: 'P6',
@@ -109,7 +109,7 @@ const PATTERNS = [
     example: 'e.g. 3 back-to-back transfers to a new contact',
     desc: 'Multiple rapid transactions to a new unverified contact — a strong social-engineering signal.',
     contrib: 22,
-    color: '#f97316',
+    color: '#facc15',
   },
   {
     id: 'P7',
@@ -118,7 +118,7 @@ const PATTERNS = [
     example: 'e.g. Payments to 5 different people in 10 minutes',
     desc: 'Payments scattered to 4+ different recipients in a short time — may indicate account takeover.',
     contrib: 18,
-    color: '#f59e0b',
+    color: '#facc15',
   },
   {
     id: 'P8',
@@ -127,7 +127,7 @@ const PATTERNS = [
     example: 'e.g. Transaction at 2:30 AM',
     desc: 'Transaction initiated during late night (11 PM – 5 AM) or very early morning — outside your normal active hours.',
     contrib: 18,
-    color: '#8b5cf6',
+    color: '#facc15',
   },
   {
     id: 'P9',
@@ -136,7 +136,7 @@ const PATTERNS = [
     example: 'e.g. Exactly ₹10,000 to an unknown recipient',
     desc: 'Exact round amounts (₹1K, ₹5K, ₹10K, etc.) to an unknown recipient — common in test-fraud.',
     contrib: 12,
-    color: '#6366f1',
+    color: '#facc15',
   },
   {
     id: 'P10',
@@ -145,7 +145,7 @@ const PATTERNS = [
     example: 'e.g. Transaction from a new or unknown device',
     desc: 'Transaction initiated from a device not previously seen in your usage profile.',
     contrib: 12,
-    color: '#3b82f6',
+    color: '#facc15',
   },
   {
     id: 'P11',
@@ -154,7 +154,7 @@ const PATTERNS = [
     example: 'e.g. Transaction from an unusual or unknown location',
     desc: 'Geographic location is inconsistent with your usual verified transaction geography.',
     contrib: 10,
-    color: '#10b981',
+    color: '#facc15',
   },
   {
     id: 'P12',
@@ -163,7 +163,7 @@ const PATTERNS = [
     example: 'e.g. Recent avg ₹200, then suddenly ₹8,000',
     desc: 'Current amount is 3× or more than your recent session average — sudden escalation signal.',
     contrib: 20,
-    color: '#ef4444',
+    color: '#facc15',
   },
   {
     id: 'P13',
@@ -172,15 +172,15 @@ const PATTERNS = [
     example: 'Example: A user makes a small ₹1 payment, but an AutoPay/mandate may result in a much larger recurring debit such as ₹399 or ₹599 later. The system checks whether the transaction data shows this suspicious relationship.',
     desc: 'The system does not treat the ₹1 payment alone as fraud; it looks for supporting AutoPay/mandate or subsequent-debit indicators such as unexpected recurring debit setups of ₹399/₹599.',
     contrib: 30,
-    color: '#ec4899',
+    color: '#facc15',
   },
 ];
 
 const RISK_TIERS = [
-  { range: '0 – 29', level: 'LOW', badge: 'badge-low', desc: 'Consistent with your baseline. No major anomalies detected.', border: 'rgba(16,185,129,0.3)' },
-  { range: '30 – 59', level: 'MEDIUM', badge: 'badge-medium', desc: 'Some variance detected (e.g. first-time contact or unusual time). Review before proceeding.', border: 'rgba(245,158,11,0.3)' },
-  { range: '60 – 79', level: 'HIGH', badge: 'badge-high', desc: 'High deviation or rapid repeated patterns. Immediate verification needed.', border: 'rgba(239,68,68,0.3)' },
-  { range: '80 – 100', level: 'CRITICAL', badge: 'badge-critical', desc: 'Multiple severe anomalies. Do NOT proceed with unfamiliar transaction.', border: 'rgba(220,38,38,0.4)' },
+  { range: '0 – 29', level: 'LOW', badge: 'badge-low', desc: 'Consistent with your baseline. No major anomalies detected.', border: 'rgba(250, 204, 21, 0.3)' },
+  { range: '30 – 59', level: 'MEDIUM', badge: 'badge-medium', desc: 'Some variance detected (e.g. first-time contact or unusual time). Review before proceeding.', border: 'rgba(250, 204, 21, 0.3)' },
+  { range: '60 – 79', level: 'HIGH', badge: 'badge-high', desc: 'High deviation or rapid repeated patterns. Immediate verification needed.', border: 'rgba(250, 204, 21, 0.3)' },
+  { range: '80 – 100', level: 'CRITICAL', badge: 'badge-critical', desc: 'Multiple severe anomalies. Do NOT proceed with unfamiliar transaction.', border: 'rgba(250, 204, 21, 0.4)' },
 ];
 
 export default function Tutorial() {
@@ -197,10 +197,10 @@ export default function Tutorial() {
 
       {/* ── SECTION 1: Workflow ── */}
       {/* ── SECTION 1: System Workflow ── */}
-      <div className="card mb-6" style={{ border: '1px solid var(--pink-border)' }}>
+      <div className="card mb-6" style={{ border: '1px solid var(--yellow-border)' }}>
         <div className="card-header" style={{ justifyContent: 'center' }}>
           <div className="card-title flex items-center gap-2">
-            <HelpCircle size={18} color="var(--pink-light)" />
+            <HelpCircle size={18} color="var(--yellow-light)" />
             System Workflow
           </div>
         </div>
@@ -209,12 +209,12 @@ export default function Tutorial() {
         <div style={{
           margin: '0 auto 20px',
           maxWidth: 780,
-          background: 'rgba(236, 72, 153, 0.08)',
-          border: '1px solid var(--pink-border)',
+          background: 'rgba(250, 204, 21, 0.08)',
+          border: '1px solid var(--yellow-border)',
           borderRadius: 8,
           padding: '12px 16px',
           textAlign: 'center',
-          color: 'var(--pink-light)',
+          color: 'var(--yellow-light)',
           fontSize: '0.85rem',
           fontWeight: 600,
           letterSpacing: '0.02em',
@@ -246,7 +246,7 @@ export default function Tutorial() {
                 <div className="text-xs text-tertiary">{s.desc}</div>
               </div>
               {i < WORKFLOW_STEPS.length - 1 && (
-                <ArrowDown size={18} color="var(--pink-light)" />
+                <ArrowDown size={18} color="var(--yellow-light)" />
               )}
             </React.Fragment>
           ))}
@@ -260,10 +260,10 @@ export default function Tutorial() {
       </div>
 
       {/* ── SECTION 1.5: How Local OCR Works ── */}
-      <div className="card mb-6" style={{ border: '1px solid var(--pink-border)' }}>
+      <div className="card mb-6" style={{ border: '1px solid var(--yellow-border)' }}>
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <Smartphone size={18} color="var(--pink-light)" />
+            <Smartphone size={18} color="var(--yellow-light)" />
             How Local App-Aware OCR Works
           </div>
         </div>
@@ -272,22 +272,22 @@ export default function Tutorial() {
         </p>
 
         <div className="grid grid-3 mb-4" style={{ gap: 14 }}>
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid rgba(16,185,129,0.3)' }}>
-            <div className="font-bold text-sm text-emerald-400 mb-1" style={{ color: '#10b981' }}>BHIM UPI Layout</div>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid rgba(250, 204, 21, 0.3)' }}>
+            <div className="font-bold text-sm text-emerald-400 mb-1" style={{ color: '#facc15' }}>BHIM UPI Layout</div>
             <div className="text-xs text-tertiary">
               Recognizes green header, extracts large amount at the top, recipient banking name, transaction ID, date & time, To UPI ID, From UPI ID, debited account, and remarks from two structured columns.
             </div>
           </div>
 
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid rgba(168,85,247,0.3)' }}>
-            <div className="font-bold text-sm mb-1" style={{ color: '#a855f7' }}>PhonePe Layout</div>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid rgba(250, 204, 21, 0.3)' }}>
+            <div className="font-bold text-sm mb-1" style={{ color: '#facc15' }}>PhonePe Layout</div>
             <div className="text-xs text-tertiary">
               Recognizes "Transaction Successful" header, extracts "Paid to" recipient and amount, recipient UPI ID, PhonePe Transaction ID (T...), UTR number, debited bank account, and partner bank.
             </div>
           </div>
 
-          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid rgba(56,189,248,0.3)' }}>
-            <div className="font-bold text-sm mb-1" style={{ color: '#38bdf8' }}>Google Pay Layout</div>
+          <div className="p-3" style={{ background: 'var(--bg-card-subtle)', borderRadius: 8, border: '1px solid rgba(250, 204, 21, 0.3)' }}>
+            <div className="font-bold text-sm mb-1" style={{ color: '#facc15' }}>Google Pay Layout</div>
             <div className="text-xs text-tertiary">
               Recognizes "To [Name]" header, central large amount, payment status, timestamp, bank card (e.g. CSB 0801), UPI transaction ID, To/From UPI handles, and Google transaction ID.
             </div>
@@ -295,9 +295,9 @@ export default function Tutorial() {
         </div>
 
         <div className="notice-box info" style={{ padding: '10px 14px' }}>
-          <ShieldCheck size={16} color="var(--pink-light)" style={{ flexShrink: 0 }} />
+          <ShieldCheck size={16} color="var(--yellow-light)" style={{ flexShrink: 0 }} />
           <div className="text-xs text-secondary">
-            <strong>Mandatory User Verification:</strong> No screenshot is ever saved automatically. Extracted fields are shown with genuine field-level confidence ratings, and the user must review and confirm the data before it is stored in SQLite and analyzed for fraud.
+            <strong>Mandatory User Verification:</strong> Screenshots are never saved. Extracted fields and confidence ratings are shown for review before transaction data is stored in the configured database and analyzed.
           </div>
         </div>
       </div>
@@ -327,7 +327,7 @@ export default function Tutorial() {
       <div className="card mb-6">
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <ShieldAlert size={18} color="var(--pink-light)" />
+            <ShieldAlert size={18} color="var(--yellow-light)" />
             13 Fraud Detection Patterns
           </div>
           <div className="text-xs text-tertiary">Click any pattern to see details</div>
@@ -353,7 +353,7 @@ export default function Tutorial() {
                 <span
                   style={{
                     background: p.color,
-                    color: '#fff',
+                    color: '#ffffff',
                     borderRadius: 6,
                     padding: '2px 7px',
                     fontFamily: 'monospace',
@@ -435,7 +435,7 @@ export default function Tutorial() {
           <div
             style={{
               background: 'var(--bg-card-subtle)',
-              border: '1px solid var(--pink-border)',
+              border: '1px solid var(--yellow-border)',
               borderRadius: 8,
               padding: '12px 16px',
               marginTop: 12,
@@ -446,7 +446,7 @@ export default function Tutorial() {
               P4 (Amount Outside Range) = +28<br />
               P5 (New Recipient + High Amt) = +25<br />
               P8 (Late Night Time) = +18<br />
-              <strong style={{ color: 'var(--pink-light)' }}>Total = 71 → HIGH RISK</strong>
+              <strong style={{ color: 'var(--yellow-light)' }}>Total = 71 → HIGH RISK</strong>
             </div>
           </div>
         </div>
@@ -454,7 +454,7 @@ export default function Tutorial() {
 
       {/* Footer note */}
       <div className="notice-box info">
-        <Info size={16} color="var(--pink-light)" style={{ flexShrink: 0, marginTop: 2 }} />
+        <Info size={16} color="var(--yellow-light)" style={{ flexShrink: 0, marginTop: 2 }} />
         <div className="text-xs text-tertiary leading-relaxed">
           This system evaluates UPI transaction risk using behavioral patterns and your historical data stored locally.
           It does not access bank accounts, initiate payments, or guarantee that any transaction is safe or fraudulent.

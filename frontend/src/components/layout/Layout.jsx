@@ -1,48 +1,39 @@
 // ==============================================================================
 // Fraud Detection and Risk Assessment System
-// Main Layout Shell
+// Main Layout Shell with Sidebar Collapse / Full Width Toggle
 // ==============================================================================
 import React, { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
 import ModeSwitchModal from './ModeSwitchModal';
 import { useApp } from '../../context/AppContext';
 
-const PAGE_TITLES = {
-  '/': 'Dashboard',
-  '/upload': 'Upload Transactions',
-  '/extraction': 'OCR Data Extraction',
-  '/confirm': 'Verify Extracted Data',
-  '/history': 'Transaction History',
-  '/profile': 'User Behaviour Profile',
-  '/analyse': 'Fraud Analysis',
-  '/result': 'Analysis Result',
-  '/suspicious': 'Suspicious Alert',
-  '/alerts': 'Fraud Alerts',
-  '/reports': 'Reports',
-  '/adaptive': 'Adaptive Learning',
-  '/monitoring': 'Model Monitoring',
-  '/settings': 'Settings & Data Management',
-  '/about': 'About Project',
-};
-
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isPasswordModalOpen, closePasswordModal } = useApp();
-  const title = PAGE_TITLES[location.pathname] || 'Fraud Detection and Risk Assessment';
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => !prev);
+  };
 
   return (
-    <div className="app-layout">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <main className="main-content">
-        <TopNav title={title} onMenuToggle={() => setSidebarOpen(true)} />
+    <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <Sidebar
+        isCollapsed={sidebarCollapsed}
+        onClose={() => setSidebarCollapsed(true)}
+      />
+      <main className={`main-content ${sidebarCollapsed ? 'expanded-full' : ''}`}>
+        <TopNav onMenuToggle={toggleSidebar} />
         <div className="page-content">
           <Outlet />
         </div>
       </main>
-      <ModeSwitchModal isOpen={isPasswordModalOpen} onClose={closePasswordModal} />
+      <ModeSwitchModal
+        isOpen={isPasswordModalOpen}
+        isLogin={false}
+        onClose={closePasswordModal}
+      />
     </div>
   );
 }

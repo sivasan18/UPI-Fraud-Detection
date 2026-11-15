@@ -13,10 +13,12 @@ export default function Settings() {
   const {
     currentMode,
     demoModeEnabled,
+    databaseBackend,
     openPasswordModal,
     clearModeData,
     removeDemoPermanently,
-    enableDemoMode
+    enableDemoMode,
+    updatePassword,
   } = useApp();
 
   // Clear data state
@@ -37,6 +39,11 @@ export default function Settings() {
   const [enablePassword, setEnablePassword] = useState('');
   const [enableError, setEnableError] = useState('');
   const [isEnabling, setIsEnabling] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const handleOpenClear = (mode) => {
     setClearTargetMode(mode);
@@ -49,7 +56,7 @@ export default function Settings() {
     setIsClearing(false);
     setShowClearConfirm(false);
     if (success) {
-      setClearSuccessMsg(`Successfully cleared all ${clearTargetMode} mode transaction data from SQLite.`);
+      setClearSuccessMsg(`Cleared ${clearTargetMode} mode transaction data.`);
       setTimeout(() => setClearSuccessMsg(''), 4000);
     }
   };
@@ -65,7 +72,7 @@ export default function Settings() {
     if (result.success) {
       setShowRemoveDemo(false);
       setRemovePassword('');
-      setRemoveSuccess('Demo Mode Removed Successfully. Demo Mode has been permanently removed from this localhost installation. Application is now running in Active Mode only.');
+      setRemoveSuccess('Demo Mode removed. The application is now running in Active Mode only.');
     } else {
       setRemoveError(result.message || 'Incorrect password.');
     }
@@ -88,12 +95,83 @@ export default function Settings() {
     }
   };
 
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+    setPasswordError('');
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      await updatePassword(currentPassword, newPassword);
+    } catch (error) {
+      setPasswordError(error?.message || error?.response?.data?.detail || 'Could not change the password.');
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in" style={{ maxWidth: 850, margin: '0 auto' }}>
       {/* Header */}
       <div className="page-header">
         <h1>Settings</h1>
-        <p>Manage application mode and local SQLite database storage.</p>
+        <p>Manage application mode and transaction data.</p>
+      </div>
+
+      <div className="card mb-6">
+        <div className="card-header">
+          <div className="card-title flex items-center gap-2">
+            <Lock size={18} color="var(--yellow-light)" />
+            Change Administrator Password
+          </div>
+        </div>
+        {passwordError && <p className="text-danger text-sm mb-3" role="alert">{passwordError}</p>}
+        <form onSubmit={handleChangePassword}>
+          <div className="grid grid-2">
+            <div className="form-group">
+              <label className="form-label" htmlFor="current-admin-password">Current password</label>
+              <input
+                id="current-admin-password"
+                className="form-input"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="new-admin-password">New password</label>
+              <input
+                id="new-admin-password"
+                className="form-input"
+                type="password"
+                autoComplete="new-password"
+                minLength={12}
+                required
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="confirm-admin-password">Confirm new password</label>
+              <input
+                id="confirm-admin-password"
+                className="form-input"
+                type="password"
+                autoComplete="new-password"
+                minLength={12}
+                required
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+            </div>
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={isChangingPassword}>
+            {isChangingPassword ? 'Changing password…' : 'Change password'}
+          </button>
+        </form>
       </div>
 
       {clearSuccessMsg && (
@@ -104,7 +182,7 @@ export default function Settings() {
       )}
 
       {removeSuccess && (
-        <div className="notice-box info mb-5" style={{ borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
+        <div className="notice-box info mb-5" style={{ borderColor: 'rgba(250, 204, 21, 0.4)', background: 'rgba(250, 204, 21, 0.06)' }}>
           <CheckCircle size={18} color="var(--risk-low)" />
           <div className="text-sm text-secondary">{removeSuccess}</div>
         </div>
@@ -114,7 +192,7 @@ export default function Settings() {
       <div className="card mb-6">
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <Lock size={18} color="var(--pink-light)" />
+            <Lock size={18} color="var(--yellow-light)" />
             Application Mode Control
           </div>
           <span className={`badge ${currentMode === 'ACTIVE' ? 'badge-low' : 'badge-demo'}`}>
@@ -125,13 +203,13 @@ export default function Settings() {
         {demoModeEnabled ? (
           <>
             <p className="text-xs text-secondary mb-4 leading-relaxed">
-              The application operates in <strong>ACTIVE MODE</strong> by default using your local SQLite database. You can switch to <strong>DEMO MODE</strong> using the administrator password (<code>admin123</code>) for academic project demonstration.
+              The application uses <strong>{databaseBackend}</strong> for Active Mode. Demo Mode remains separate and requires administrator verification.
             </p>
 
-            <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid var(--pink-border)' }}>
+            <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid var(--yellow-border)' }}>
               <div className="flex justify-between items-center flex-wrap gap-3">
                 <div>
-                  <div className="font-semibold text-sm" style={{ color: '#fff' }}>
+                  <div className="font-semibold text-sm" style={{ color: '#ffffff' }}>
                     {currentMode === 'ACTIVE' ? '● ACTIVE MODE (Default Real Storage)' : '● DEMO MODE (Synthetic Data Sandbox)'}
                   </div>
                   <div className="text-xs text-tertiary mt-1">
@@ -146,7 +224,7 @@ export default function Settings() {
 
             {currentMode === 'DEMO' && (
               <div className="notice-box info mt-4" style={{ padding: '0.6rem 0.85rem' }}>
-                <AlertTriangle size={15} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
+                <AlertTriangle size={15} color="#facc15" style={{ flexShrink: 0, marginTop: 2 }} />
                 <div className="text-xs text-secondary">
                   <strong>DEMO MODE — SYNTHETIC DATA.</strong> This data is for project demonstration only. Active Mode data is not affected.
                 </div>
@@ -154,10 +232,10 @@ export default function Settings() {
             )}
           </>
         ) : (
-          <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid rgba(16,185,129,0.25)' }}>
+          <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid rgba(250, 204, 21, 0.25)' }}>
             <div className="flex items-center gap-2 mb-2">
-              <Shield size={18} color="#34d399" />
-              <div className="font-semibold text-sm" style={{ color: '#34d399' }}>Demo Mode: Permanently Removed</div>
+              <Shield size={18} color="#facc15" />
+              <div className="font-semibold text-sm" style={{ color: '#facc15' }}>Demo Mode: Permanently Removed</div>
             </div>
             <p className="text-xs text-secondary leading-relaxed mb-3">
               Application is running in Active Mode only. All synthetic demo data and demo-only options have been permanently removed.
@@ -165,7 +243,7 @@ export default function Settings() {
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => { setShowEnableDemo(true); setEnableError(''); setEnablePassword(''); }}
-              style={{ color: 'var(--pink-light)', padding: 0 }}
+              style={{ color: 'var(--yellow-light)', padding: 0 }}
             >
               Re-enable Demo Mode for testing...
             </button>
@@ -173,24 +251,24 @@ export default function Settings() {
         )}
       </div>
 
-      {/* 2. Local SQLite Data Management */}
+      {/* 2. Database Data Management */}
       <div className="card mb-6">
         <div className="card-header">
           <div className="card-title flex items-center gap-2">
-            <Database size={18} color="var(--pink-light)" />
-            Local SQLite Data Management
+            <Database size={18} color="var(--yellow-light)" />
+            {databaseBackend} Data Management
           </div>
         </div>
 
         <div className={demoModeEnabled ? "grid grid-2" : ""}>
           {/* Clear Active Data */}
-          <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid var(--pink-border)' }}>
+          <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid var(--yellow-border)' }}>
             <div className="flex items-center gap-2 mb-2">
-              <Trash2 size={16} color="#ef4444" />
+              <Trash2 size={16} color="#facc15" />
               <h4 className="text-sm font-semibold">Clear Active Data</h4>
             </div>
             <p className="text-xs text-secondary mb-4">
-              Permanently clears locally stored Active Mode transaction records from SQLite.
+              Permanently clears Active Mode transaction records.
             </p>
             <button className="btn btn-danger btn-sm" onClick={() => handleOpenClear('ACTIVE')}>
               Clear Active Data
@@ -199,13 +277,13 @@ export default function Settings() {
 
           {/* Clear Demo Data */}
           {demoModeEnabled && (
-            <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid var(--pink-border)' }}>
+            <div className="p-4" style={{ background: 'var(--bg-card-subtle)', borderRadius: 10, border: '1px solid var(--yellow-border)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <RefreshCw size={16} color="var(--pink-light)" />
+                <RefreshCw size={16} color="var(--yellow-light)" />
                 <h4 className="text-sm font-semibold">Clear Demo Data</h4>
               </div>
               <p className="text-xs text-secondary mb-4">
-                Clears synthetic demo records without affecting your Active Mode data.
+                Clears synthetic demo records without affecting Active Mode data.
               </p>
               <button className="btn btn-secondary btn-sm" onClick={() => handleOpenClear('DEMO')}>
                 Clear Demo Data
@@ -217,13 +295,13 @@ export default function Settings() {
 
       {/* 3. Permanent Demo Removal (Shown only when Demo is enabled) */}
       {demoModeEnabled && (
-        <div className="card mb-6" style={{ borderColor: 'rgba(239,68,68,0.3)' }}>
+        <div className="card mb-6" style={{ borderColor: 'rgba(250, 204, 21, 0.3)' }}>
           <div className="card-header">
-            <div className="card-title flex items-center gap-2" style={{ color: '#ef4444' }}>
+            <div className="card-title flex items-center gap-2" style={{ color: '#facc15' }}>
               <AlertTriangle size={18} />
               Permanent Demo Mode Removal
             </div>
-            <span className="badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: '0.65rem' }}>
+            <span className="badge" style={{ background: 'rgba(250, 204, 21, 0.15)', color: '#facc15', fontSize: '0.65rem' }}>
               ⚠ Irreversible
             </span>
           </div>
@@ -243,7 +321,7 @@ export default function Settings() {
 
       {/* Academic Disclaimer */}
       <div className="notice-box info">
-        <Info size={16} color="var(--pink-light)" style={{ flexShrink: 0, marginTop: 2 }} />
+        <Info size={16} color="var(--yellow-light)" style={{ flexShrink: 0, marginTop: 2 }} />
         <div className="text-xs text-tertiary leading-relaxed">
           <strong>Academic Project Disclaimer:</strong> This project is an academic prototype for UPI transaction risk assessment. It does not access bank accounts, initiate payments, or guarantee that a transaction is safe or fraudulent.
         </div>
@@ -259,7 +337,7 @@ export default function Settings() {
             </div>
 
             <p className="text-xs text-secondary mb-6 leading-relaxed">
-              Are you sure you want to permanently delete locally stored <strong>{clearTargetMode} MODE</strong> transaction data from SQLite? This cannot be undone.
+              Are you sure you want to permanently delete <strong>{clearTargetMode} MODE</strong> transaction data from {databaseBackend}? This cannot be undone.
             </p>
 
             <div className="flex justify-end gap-3">
@@ -283,18 +361,18 @@ export default function Settings() {
         <div className="modal-overlay" onClick={() => setShowRemoveDemo(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <AlertTriangle size={22} color="#ef4444" />
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(250, 204, 21, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={22} color="#facc15" />
               </div>
               <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ef4444' }}>Are you sure you want to permanently remove Demo Mode?</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#facc15' }}>Are you sure you want to permanently remove Demo Mode?</h3>
               </div>
             </div>
 
             <div className="notice-box security mb-4" style={{ padding: '0.65rem 0.85rem' }}>
-              <AlertTriangle size={15} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
+              <AlertTriangle size={15} color="#facc15" style={{ flexShrink: 0, marginTop: 2 }} />
               <div className="text-xs text-secondary leading-relaxed">
-                <strong>Warning:</strong> This will permanently remove Demo Mode, all synthetic demo data, and demo-only functionality from this localhost installation. This action cannot be undone.
+                <strong>Warning:</strong> This permanently removes Demo Mode, its synthetic data, and demo-only functionality from this application. This action cannot be undone.
               </div>
             </div>
 
@@ -304,7 +382,7 @@ export default function Settings() {
 
             {removeError && (
               <div className="notice-box security mb-4" style={{ padding: '0.6rem 0.85rem' }}>
-                <XCircle size={15} color="#f43f5e" style={{ flexShrink: 0, marginTop: 2 }} />
+                <XCircle size={15} color="#facc15" style={{ flexShrink: 0, marginTop: 2 }} />
                 <div className="text-xs text-danger font-semibold">{removeError}</div>
               </div>
             )}
@@ -315,7 +393,7 @@ export default function Settings() {
                 <input
                   type="password"
                   className="form-input"
-                  placeholder="admin123"
+                  placeholder="Configured administrator password"
                   required
                   autoFocus
                   value={removePassword}
@@ -341,8 +419,8 @@ export default function Settings() {
         <div className="modal-overlay" onClick={() => setShowEnableDemo(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(236,72,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Lock size={20} color="var(--pink-light)" />
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(250, 204, 21, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Lock size={20} color="var(--yellow-light)" />
               </div>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Re-enable Demo Mode for Testing</h3>
@@ -351,7 +429,7 @@ export default function Settings() {
 
             {enableError && (
               <div className="notice-box security mb-4" style={{ padding: '0.6rem 0.85rem' }}>
-                <XCircle size={15} color="#f43f5e" style={{ flexShrink: 0, marginTop: 2 }} />
+                <XCircle size={15} color="#facc15" style={{ flexShrink: 0, marginTop: 2 }} />
                 <div className="text-xs text-danger font-semibold">{enableError}</div>
               </div>
             )}
@@ -362,7 +440,7 @@ export default function Settings() {
                 <input
                   type="password"
                   className="form-input"
-                  placeholder="admin123"
+                  placeholder="Configured administrator password"
                   required
                   autoFocus
                   value={enablePassword}

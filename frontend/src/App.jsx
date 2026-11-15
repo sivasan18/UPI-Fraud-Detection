@@ -3,7 +3,9 @@
 // Application Router
 // ==============================================================================
 import { Routes, Route } from 'react-router-dom';
+import { useApp } from './context/AppContext';
 import Layout from './components/layout/Layout';
+import SignInPage from './pages/SignInPage';
 import Dashboard from './pages/Dashboard';
 import Tutorial from './pages/Tutorial';
 import UploadTransaction from './pages/UploadTransaction';
@@ -22,6 +24,15 @@ import Settings from './pages/Settings';
 import AboutProject from './pages/AboutProject';
 
 function App() {
+  const { isAuthenticated, sessionChecked } = useApp();
+
+  if (!sessionChecked) {
+    return <main className="signin-screen" aria-busy="true" />;
+  }
+  if (!isAuthenticated) {
+    return <SignInPage />;
+  }
+
   return (
     <Routes>
       <Route element={<Layout />}>
