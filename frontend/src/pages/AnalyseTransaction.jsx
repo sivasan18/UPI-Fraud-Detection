@@ -138,28 +138,33 @@ export default function AnalyseTransaction() {
           expected_recurring_amount: parseFloat(targetTxn.expected_recurring_amount) || 0,
         };
 
-        const result = await runAnalysis(payload);
-        setIsAnalysing(false);
+        try {
+          const result = await runAnalysis(payload);
+          setIsAnalysing(false);
 
-        if (result) {
-          setAnalysisError('');
-          setAnalysisResult(result);
-          setCurrentAnalysis(result);
-          setCurrentTransaction(payload);
+          if (result) {
+            setAnalysisError('');
+            setAnalysisResult(result);
+            setCurrentAnalysis(result);
+            setCurrentTransaction(payload);
 
-          // If suspicious patterns detected, show the modal alert popup!
-          const detectedList = result.detected_patterns_details || [];
-          if (detectedList.length > 0 || (result.score && result.score >= 30)) {
-            setShowPatternModal(true);
+            // If suspicious patterns detected, show the modal alert popup!
+            const detectedList = result.detected_patterns_details || [];
+            if (detectedList.length > 0 || (result.score && result.score >= 30)) {
+              setShowPatternModal(true);
+            }
+
+            // Smooth scroll to results
+            setTimeout(() => {
+              const el = document.getElementById('analysis-results-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 200);
+          } else {
+            setAnalysisError('Analysis could not be completed. Check the transaction and try again.');
           }
-
-          // Smooth scroll to results
-          setTimeout(() => {
-            const el = document.getElementById('analysis-results-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }, 200);
-        } else {
-          setAnalysisError('Analysis could not be completed. Check the transaction and try again.');
+        } catch (err) {
+          setIsAnalysing(false);
+          setAnalysisError(err?.message || 'Analysis could not be completed. Please check transaction parameters.');
         }
       }
     }, 240);

@@ -344,19 +344,20 @@ export function AppProvider({ children }) {
     try {
       const payload = { ...txnData, mode: state.currentMode };
       const res = await api.confirmTransaction(payload);
-      if (res.success) {
+      if (res && res.success) {
         dispatch({ type: 'SET_CURRENT_TRANSACTION', payload: res.transaction });
         dispatch({ type: 'SET_CURRENT_ANALYSIS', payload: res.analysis });
         await refreshData(state.currentMode);
         return res;
       }
+      return { success: false, detail: 'Failed to confirm transaction insert.' };
     } catch (err) {
+      console.error('[confirmAndSaveTransaction Error]:', err);
       return {
         success: false,
-        detail: err?.message || 'Could not save this transaction.',
+        detail: err?.message || 'Could not save this transaction to the database.',
       };
     }
-    return { success: false, detail: 'Could not save this transaction.' };
   }, [state.currentMode, refreshData]);
 
   // Run Real-time Risk Analysis
@@ -370,7 +371,8 @@ export function AppProvider({ children }) {
         return res.analysis;
       }
     } catch (err) {
-      console.error('Analysis error:', err);
+      console.error('[runAnalysis Error]:', err);
+      throw err;
     }
     return null;
   }, [state.currentMode]);

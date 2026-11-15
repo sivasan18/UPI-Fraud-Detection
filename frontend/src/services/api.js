@@ -14,6 +14,7 @@ import { evaluateTransactionRisk } from '../engine/riskEngine.js';
 import { buildBehaviourProfile } from '../engine/behaviourProfile.js';
 import { processImageOCR, processStatement } from '../engine/ocrEngine.js';
 import { generateHistoricalTransactions } from './demoData.js';
+import { normalizeTransactionDate, normalizeTransactionTime } from '../utils/dateUtils.js';
 
 // Local in-memory fallback store if Supabase credentials are not yet configured in .env
 let localStore = {
@@ -137,7 +138,7 @@ export const api = {
     if (isSupabaseConfigured()) {
       let query = supabase
         .from('transactions')
-        .select('*, fraud_analyses(*)')
+        .select('*')
         .eq('mode', mode)
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -150,7 +151,12 @@ export const api = {
       }
 
       const { data, error } = await query;
-      if (!error && data) {
+      if (error) {
+        console.error('[Supabase getTransactions Error]:', error);
+        throw new Error(`Failed to read transactions from Supabase: ${error.message} (Code: ${error.code || 'ERR'})`);
+      }
+
+      if (data) {
         let results = data;
         if (search) {
           const s = search.toLowerCase();
@@ -161,11 +167,11 @@ export const api = {
               (t.receiver_upi || '').toLowerCase().includes(s)
           );
         }
-        return { success: true, count: results.length, transactions: results };
+        return { success: true, count: results.length, transactions: results, storage: 'supabase' };
       }
     }
 
-    // Local fallback
+    // Local in-memory fallback (used when Supabase anon key is not configured or in Demo mode)
     let list = localStore[mode]?.transactions || [];
     if (risk_level) list = list.filter((t) => t.risk_level === risk_level);
     if (recipient) list = list.filter((t) => (t.receiver || '').toLowerCase().includes(recipient.toLowerCase()));
@@ -177,17 +183,21 @@ export const api = {
           (t.transaction_id || '').toLowerCase().includes(s)
       );
     }
-    return { success: true, count: list.length, transactions: list };
+    return { success: true, count: list.length, transactions: list, storage: 'localStore' };
   },
 
   getTransaction: async (txnId) => {
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase
         .from('transactions')
-        .select('*, fraud_analyses(*)')
+        .select('*')
         .eq('id', txnId)
         .single();
-      if (!error && data) return data;
+      if (error) {
+        console.warn('[Supabase getTransaction Error]:', error.message);
+      } else if (data) {
+        return data;
+      }
     }
     for (const mode of ['ACTIVE', 'DEMO']) {
       const found = localStore[mode].transactions.find((t) => t.id === txnId || t.transaction_id === txnId);
@@ -200,33 +210,67 @@ export const api = {
     const mode = txn.mode || 'ACTIVE';
     const cleanId = txn.id || `TXN_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-    // 1. Run live 13-pattern fraud analysis
+    // 1. Normalize and strictly validate the date
+    const dateNorm = normalizeTransactionDate(txn.date || txn.date_iso || txn.dateISO);
+    if (!dateNorm.isValid) {
+      throw new Error(dateNorm.error || 'Invalid transaction date. Please enter a valid date (e.g. 29 May 2026, 24/03/2026, or 2026-05-29).');
+    }
+
+    // 2. Normalize and validate time
+    const timeNorm = normalizeTransactionTime(txn.time);
+
+    // 3. Validate monetary amount
+    const amount = parseFloat(txn.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error('Transaction amount must be a positive number.');
+    }
+
+    // 4. Validate recipient
+    const receiver = (txn.receiver || txn.merchant || '').trim();
+    if (!receiver) {
+      throw new Error('Recipient / Merchant name is required.');
+    }
+
+    // 5. Run live 13-pattern fraud analysis
     const profile = await api.getProfile(mode);
     const recentRes = await api.getTransactions({ mode, limit: 15 });
-    const recent = recentRes.transactions || [];
+    const recent = (recentRes.transactions || []).filter(
+      (t) => t.id !== cleanId && t.transaction_id !== (txn.transaction_id || cleanId)
+    );
 
-    const analysis = evaluateTransactionRisk(txn, profile, recent);
+    const analysisTxn = {
+      ...txn,
+      amount,
+      receiver,
+      date: dateNorm.date,
+      date_iso: dateNorm.date_iso,
+      time: timeNorm.time,
+      hour: timeNorm.hour,
+      minute: timeNorm.minute,
+    };
+
+    const analysis = evaluateTransactionRisk(analysisTxn, profile, recent);
 
     const fullTxn = {
       id: cleanId,
       transaction_id: txn.transaction_id || txn.transactionId || cleanId,
       mode,
-      amount: parseFloat(txn.amount || 0),
-      date: txn.date || new Date().toISOString().split('T')[0],
-      date_iso: txn.date_iso || txn.dateISO || new Date().toISOString(),
-      time: txn.time || '12:00 PM',
-      hour: txn.hour !== undefined ? parseInt(txn.hour, 10) : new Date().getHours(),
-      minute: txn.minute !== undefined ? parseInt(txn.minute, 10) : new Date().getMinutes(),
+      amount,
+      date: dateNorm.date,
+      date_iso: dateNorm.date_iso,
+      time: timeNorm.time,
+      hour: timeNorm.hour,
+      minute: timeNorm.minute,
       sender: txn.sender || 'Primary Account',
       sender_upi: txn.sender_upi || txn.senderUpi || 'user@upi',
-      receiver: txn.receiver || txn.merchant || 'Merchant',
+      receiver,
       receiver_upi: txn.receiver_upi || txn.receiverUpi || '',
       status: txn.status || 'Completed',
-      merchant: txn.merchant || txn.receiver || '',
+      merchant: txn.merchant || receiver,
       category: txn.category || 'General',
       location: txn.location || 'Local',
       device: txn.device || 'Mobile App',
-      source_type: txn.source_type || 'manual',
+      source_type: txn.source_type || 'screenshot',
       validated: 1,
       risk_score: analysis.score,
       risk_level: analysis.level,
@@ -237,45 +281,59 @@ export const api = {
       payment_mode: txn.payment_mode || 'UPI',
       bank: txn.bank || '',
       autopay_mandate: txn.autopay_mandate || '',
-      expected_recurring_amount: txn.expected_recurring_amount || null,
+      expected_recurring_amount: txn.expected_recurring_amount ? parseFloat(txn.expected_recurring_amount) : null,
       created_at: new Date().toISOString(),
     };
 
     if (isSupabaseConfigured()) {
-      // Upsert transaction
-      const { error: txnErr } = await supabase.from('transactions').upsert(fullTxn);
+      // 6. Explicitly upsert and select the returned record to confirm insertion
+      const { data: savedData, error: txnErr } = await supabase
+        .from('transactions')
+        .upsert(fullTxn)
+        .select()
+        .single();
+
       if (txnErr) {
-        console.error('[Supabase] Failed to save transaction:', txnErr);
-        throw new Error(`Database error saving transaction: ${txnErr.message}`);
+        console.error('[Supabase Save Error Details]:', {
+          error: txnErr,
+          message: txnErr.message,
+          code: txnErr.code,
+          details: txnErr.details,
+          hint: txnErr.hint,
+        });
+        throw new Error(`Database error saving transaction: ${txnErr.message} (Code: ${txnErr.code || 'ERR'})`);
       }
 
-      // Insert analysis record
+      if (!savedData) {
+        throw new Error('Supabase database did not return the inserted transaction record. Save was not confirmed.');
+      }
+
+      // 7. Insert analysis record
       const analysisRecord = {
         transaction_id: cleanId,
         mode,
         risk_score: analysis.score,
         risk_level: analysis.level,
         risk_type: analysis.type,
-        detected_patterns: analysis.detected_patterns,
-        pattern_ids: analysis.pattern_ids,
-        detected_patterns_details: analysis.detected_patterns_details,
-        not_detected_patterns: analysis.not_detected_patterns,
-        all_patterns_checked: analysis.all_patterns_checked,
-        factors: analysis.factors,
-        profile_status: analysis.profile_status,
-        why: analysis.why,
-        recommendation: analysis.recommendation,
-        created_at: new Date().toISOString(),
+        detected_patterns: analysis.detected_patterns || [],
+        pattern_ids: analysis.pattern_ids || [],
+        detected_patterns_details: analysis.detected_patterns_details || [],
+        not_detected_patterns: analysis.not_detected_patterns || [],
+        all_patterns_checked: analysis.all_patterns_checked || [],
+        factors: analysis.factors || [],
+        profile_status: analysis.profile_status || 'Baseline Ready',
+        why: analysis.why || [],
+        recommendation: analysis.recommendation || '',
       };
       const { error: faErr } = await supabase.from('fraud_analyses').insert(analysisRecord);
       if (faErr) {
         console.warn('[Supabase] Fraud analysis insert notice:', faErr.message);
       }
 
-      // Create alert if high risk
+      // 8. Create alert if high risk
       if (analysis.score >= 60) {
         const { error: altErr } = await supabase.from('alerts').insert({
-          id: `ALT_${Date.now()}`,
+          id: `ALT_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
           mode,
           transaction_id: cleanId,
           severity: analysis.level,
@@ -289,12 +347,22 @@ export const api = {
           console.warn('[Supabase] Alert insert notice:', altErr.message);
         }
       }
+
+      return {
+        success: true,
+        transaction: savedData,
+        analysis,
+        storage: 'supabase',
+      };
     } else {
       // Local fallback
+      if (mode === 'ACTIVE') {
+        console.warn('[Storage Notice] Supabase is not configured. Saving to local draft memory.');
+      }
       localStore[mode].transactions.unshift(fullTxn);
       if (analysis.score >= 60) {
         localStore[mode].alerts.unshift({
-          id: `ALT_${Date.now()}`,
+          id: `ALT_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
           mode,
           transaction_id: cleanId,
           severity: analysis.level,
@@ -305,13 +373,15 @@ export const api = {
           created_at: new Date().toISOString(),
         });
       }
-    }
 
-    return {
-      success: true,
-      transaction: fullTxn,
-      analysis,
-    };
+      return {
+        success: true,
+        transaction: fullTxn,
+        analysis,
+        storage: 'localStore',
+        warning: 'Supabase credentials are not configured in environment. Transaction was saved to temporary local memory only.',
+      };
+    }
   },
 
   deleteTransaction: async (txnId) => {
@@ -366,18 +436,37 @@ export const api = {
   },
 
   analyseTransaction: async (txnData) => {
-    const mode = txnData.mode || 'ACTIVE';
-    const profile = await api.getProfile(mode);
-    const recentRes = await api.getTransactions({ mode, limit: 15 });
-    const recent = (recentRes.transactions || []).filter(
-      (t) => t.id !== txnData.id && t.transaction_id !== txnData.transaction_id
-    );
+    try {
+      const mode = txnData.mode || 'ACTIVE';
+      const profile = await api.getProfile(mode);
+      const recentRes = await api.getTransactions({ mode, limit: 15 });
+      const recent = (recentRes.transactions || []).filter(
+        (t) => t.id !== txnData.id && t.transaction_id !== txnData.transaction_id
+      );
 
-    const analysis = evaluateTransactionRisk(txnData, profile, recent);
-    return {
-      success: true,
-      analysis,
-    };
+      // Normalize date & time safely before evaluation
+      const dateNorm = normalizeTransactionDate(txnData.date || txnData.date_iso || txnData.dateISO);
+      const timeNorm = normalizeTransactionTime(txnData.time);
+
+      const normalizedTxn = {
+        ...txnData,
+        amount: parseFloat(txnData.amount) || 0,
+        date: dateNorm.isValid ? dateNorm.date : (txnData.date || ''),
+        date_iso: dateNorm.isValid ? dateNorm.date_iso : (txnData.date_iso || ''),
+        time: timeNorm.time,
+        hour: txnData.hour !== undefined && txnData.hour !== null ? parseInt(txnData.hour, 10) : timeNorm.hour,
+        minute: txnData.minute !== undefined && txnData.minute !== null ? parseInt(txnData.minute, 10) : timeNorm.minute,
+      };
+
+      const analysis = evaluateTransactionRisk(normalizedTxn, profile, recent);
+      return {
+        success: true,
+        analysis,
+      };
+    } catch (err) {
+      console.error('[api.analyseTransaction Error]:', err);
+      throw new Error(`Fraud analysis error: ${err.message}`);
+    }
   },
 
   // --------------------------------------------------------------------------

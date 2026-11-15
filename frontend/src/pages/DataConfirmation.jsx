@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ShieldCheck, Edit3, ArrowRight, Database, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { normalizeTransactionDate, normalizeTransactionTime } from '../utils/dateUtils';
 
 export default function DataConfirmation() {
   const navigate = useNavigate();
@@ -39,10 +40,24 @@ export default function DataConfirmation() {
       setSaveError('Enter a valid amount and recipient before saving.');
       return;
     }
+
+    // Explicit date validation to reject invalid or impossible calendar dates
+    const dateNorm = normalizeTransactionDate(editableTxn.date);
+    if (!dateNorm.valid) {
+      setSaveError(dateNorm.error || 'Please enter a valid date (e.g. 29 May 2026 or 2026-05-29).');
+      return;
+    }
+
+    const timeNorm = normalizeTransactionTime(editableTxn.time);
+
     setIsSaving(true);
     const finalTxn = {
       ...editableTxn,
       amount: parseFloat(editableTxn.amount) || 0,
+      date: dateNorm.date,
+      date_iso: dateNorm.date_iso,
+      time: timeNorm.valid ? timeNorm.time : (editableTxn.time || ''),
+      hour: timeNorm.valid ? timeNorm.hour : editableTxn.hour,
       validated: true,
     };
 

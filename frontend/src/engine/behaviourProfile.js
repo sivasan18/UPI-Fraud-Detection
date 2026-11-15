@@ -2,22 +2,31 @@
 // UPI Sentinel AI — Behaviour Profile Engine
 // ============================================
 
+import { normalizeTransactionDate, safeParseDate } from '../utils/dateUtils.js';
+
 export function buildBehaviourProfile(transactions) {
   if (!transactions || transactions.length === 0) {
     return getEmptyProfile();
   }
 
-  const validated = transactions.filter(t => t.validated);
+  const validated = transactions.filter(
+    t => t.validated === 1 || t.validated === true || t.validated === '1' || t.status === 'COMPLETED' || t.status === 'SUCCESS'
+  );
   if (validated.length === 0) return getEmptyProfile();
 
-  const amounts = validated.map(t => t.amount);
-  const hours = validated.map(t => t.hour);
+  const amounts = validated.map(t => parseFloat(t.amount) || 0).filter(a => a > 0);
+  if (amounts.length === 0) return getEmptyProfile();
+
+  const hours = validated
+    .map(t => (t.hour !== undefined && t.hour !== null ? parseInt(t.hour, 10) : null))
+    .filter(h => h !== null && !isNaN(h) && h >= 0 && h <= 23);
+
   const sortedAmounts = [...amounts].sort((a, b) => a - b);
 
   // Amount stats
   const sum = amounts.reduce((a, b) => a + b, 0);
   const averageAmount = Math.round(sum / amounts.length);
-  const medianAmount = sortedAmounts[Math.floor(sortedAmounts.length / 2)];
+  const medianAmount = sortedAmounts[Math.floor(sortedAmounts.length / 2)] || averageAmount;
   const maxAmount = Math.max(...amounts);
   const minAmount = Math.min(...amounts);
   const amountStdDev = Math.round(
@@ -25,40 +34,49 @@ export function buildBehaviourProfile(transactions) {
   );
 
   // Time stats
-  const sortedHours = [...hours].sort((a, b) => a - b);
-  const normalTimeStart = sortedHours[Math.floor(sortedHours.length * 0.05)] || 8;
-  const normalTimeEnd = sortedHours[Math.floor(sortedHours.length * 0.95)] || 22;
+  const sortedHours = hours.length > 0 ? [...hours].sort((a, b) => a - b) : [9, 14, 20];
+  const normalTimeStart = sortedHours[Math.floor(sortedHours.length * 0.05)] ?? 8;
+  const normalTimeEnd = sortedHours[Math.floor(sortedHours.length * 0.95)] ?? 22;
 
   // Hour distribution
   const hourDistribution = Array(24).fill(0);
-  hours.forEach(h => hourDistribution[h]++);
+  hours.forEach(h => {
+    if (h >= 0 && h < 24) hourDistribution[h]++;
+  });
 
-  // Day distribution
+  // Day distribution (0 = Sunday, 1 = Monday, ...)
   const dayDistribution = Array(7).fill(0);
   validated.forEach(t => {
-    const d = new Date(t.dateISO);
-    dayDistribution[d.getDay()]++;
+    const raw = t.date_iso || t.dateISO || t.date;
+    const d = safeParseDate(raw);
+    if (d) {
+      dayDistribution[d.getUTCDay()]++;
+    }
   });
 
   // Daily frequency
   const dateMap = {};
   validated.forEach(t => {
-    dateMap[t.dateISO] = (dateMap[t.dateISO] || 0) + 1;
+    const raw = t.date_iso || t.dateISO || t.date;
+    const norm = normalizeTransactionDate(raw);
+    const key = norm.isValid ? norm.date_iso : (raw || 'unknown');
+    dateMap[key] = (dateMap[key] || 0) + 1;
   });
   const dailyCounts = Object.values(dateMap);
-  const averageDailyTransactions = Math.round(
-    dailyCounts.reduce((a, b) => a + b, 0) / dailyCounts.length
-  );
+  const averageDailyTransactions = dailyCounts.length > 0
+    ? Math.max(1, Math.round(dailyCounts.reduce((a, b) => a + b, 0) / dailyCounts.length))
+    : 1;
 
   // Recipient frequency
   const recipientMap = {};
   validated.forEach(t => {
-    const key = t.receiver || 'Unknown';
+    const key = (t.receiver || t.merchant || 'Unknown').trim();
+    const upi = t.receiver_upi || t.receiverUpi || '';
     if (!recipientMap[key]) {
-      recipientMap[key] = { name: key, upiId: t.receiverUpi, count: 0, totalAmount: 0 };
+      recipientMap[key] = { name: key, upiId: upi, count: 0, totalAmount: 0 };
     }
     recipientMap[key].count++;
-    recipientMap[key].totalAmount += t.amount;
+    recipientMap[key].totalAmount += parseFloat(t.amount) || 0;
   });
 
   const frequentRecipients = Object.values(recipientMap)
@@ -68,7 +86,7 @@ export function buildBehaviourProfile(transactions) {
   // New recipient ratio
   const uniqueRecipients = Object.keys(recipientMap).length;
   const totalTxns = validated.length;
-  const newRecipientRatio = uniqueRecipients / totalTxns;
+  const newRecipientRatio = totalTxns > 0 ? uniqueRecipients / totalTxns : 0.5;
 
   // Devices
   const deviceMap = {};
@@ -86,7 +104,7 @@ export function buildBehaviourProfile(transactions) {
       locationMap[t.location] = (locationMap[t.location] || 0) + 1;
     }
   });
-  const usualLocation = Object.entries(locationMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown';
+  const usualLocation = Object.entries(locationMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Local';
 
   // Amount range (5th to 95th percentile)
   const normalAmountMin = sortedAmounts[Math.floor(sortedAmounts.length * 0.05)] || minAmount;
@@ -95,11 +113,14 @@ export function buildBehaviourProfile(transactions) {
   // Weekly frequency
   const weekMap = {};
   validated.forEach(t => {
-    const d = new Date(t.dateISO);
-    const weekStart = new Date(d);
-    weekStart.setDate(d.getDate() - d.getDay());
-    const key = weekStart.toISOString().split('T')[0];
-    weekMap[key] = (weekMap[key] || 0) + 1;
+    const raw = t.date_iso || t.dateISO || t.date;
+    const d = safeParseDate(raw);
+    if (d) {
+      const weekStart = new Date(d);
+      weekStart.setUTCDate(d.getUTCDate() - d.getUTCDay());
+      const key = weekStart.toISOString().split('T')[0];
+      weekMap[key] = (weekMap[key] || 0) + 1;
+    }
   });
   const weeklyFrequency = Object.entries(weekMap)
     .map(([week, count]) => ({ week, count }))

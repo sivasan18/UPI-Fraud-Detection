@@ -5,6 +5,7 @@
 // Zero backend dependency; screenshots are processed in memory and discarded.
 // ==============================================================================
 import { createWorker } from 'tesseract.js';
+import { normalizeTransactionDate } from '../utils/dateUtils.js';
 
 export const APP_KEYWORDS = {
   bhim: [
@@ -699,14 +700,19 @@ export async function processImageOCR(imageFile, onProgress = null) {
       extracted = extractGeneralLayout(lines, fullText);
     }
 
-    // Default missing fields safely without guessing fake amounts or fake IDs
-    if (!extracted.date) {
-      const now = new Date();
-      extracted.date = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    // Normalize extracted date without substituting current date
+    if (extracted.date) {
+      const normDate = normalizeTransactionDate(extracted.date);
+      if (normDate.isValid) {
+        extracted.date = normDate.date;
+        extracted.date_iso = normDate.date_iso;
+      }
+    } else {
+      extracted.date_iso = '';
     }
+
     if (!extracted.time) {
-      const now = new Date();
-      extracted.time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).toLowerCase();
+      extracted.time = '';
     }
     if (!extracted.transaction_id) {
       extracted.transaction_id = `UPI${Date.now().toString().slice(-8)}`;
@@ -732,6 +738,7 @@ export async function processImageOCR(imageFile, onProgress = null) {
     extracted.field_confidences = confidences;
     extracted.needs_manual_entry =
       !extracted.amount ||
+      !extracted.date ||
       confidences.amount === 'Uncertain' ||
       confidences.transaction_id === 'Uncertain' ||
       overallConfidence < 0.6;
