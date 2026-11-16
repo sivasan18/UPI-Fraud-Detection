@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { resolveEmailToUsername } from '../services/auth';
 
 const AppContext = createContext(null);
 
@@ -83,7 +84,7 @@ function appReducer(state, action) {
       return {
         ...state,
         isAuthenticated: false,
-        adminUsername: 'USER1',
+        adminUsername: '',
         currentMode: 'ACTIVE',
         transactions: [],
         alerts: [],
@@ -166,10 +167,37 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const handleSessionExpired = () => {
       dispatch({ type: 'CLEAR_SESSION' });
+      navigate('/login', { replace: true });
     };
     window.addEventListener('upi-session-expired', handleSessionExpired);
     return () => window.removeEventListener('upi-session-expired', handleSessionExpired);
-  }, []);
+  }, [navigate]);
+
+  // Listen to Supabase authentication state changes
+  useEffect(() => {
+    const subscription = api.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        dispatch({ type: 'CLEAR_SESSION' });
+        navigate('/login', { replace: true });
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          const username = resolveEmailToUsername(session.user.email);
+          dispatch({
+            type: 'SET_ADMIN_USER',
+            payload: {
+              authenticated: true,
+              username,
+              role: 'Administrator',
+            },
+          });
+        }
+      }
+    });
+
+    return () => {
+      if (subscription?.unsubscribe) subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Restore authenticated Supabase session on startup
   useEffect(() => {
@@ -260,14 +288,20 @@ export function AppProvider({ children }) {
   }, [navigate]);
 
   const signOut = useCallback(async () => {
-    await api.logout();
-    dispatch({ type: 'CLEAR_SESSION' });
-  }, []);
+    try {
+      await api.logout();
+    } catch (err) {
+      console.warn('[signOut Notice]:', err?.message);
+    } finally {
+      dispatch({ type: 'CLEAR_SESSION' });
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
 
   const updatePassword = useCallback(async (currentPassword, newPassword) => {
     const res = await api.changePassword(currentPassword, newPassword);
     dispatch({ type: 'CLEAR_SESSION' });
-    navigate('/?passwordChanged=1', { replace: true });
+    navigate('/login?passwordChanged=1', { replace: true });
     return res;
   }, [navigate]);
 

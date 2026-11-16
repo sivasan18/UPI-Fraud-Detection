@@ -117,9 +117,25 @@ export async function signOutUser() {
   localStorage.removeItem('upi-admin-local-session');
   if (isSupabaseConfigured()) {
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error) {
+      console.warn('[Supabase signOut Notice]:', error.message);
+      // Still proceed with local signout so the user is never stuck in a broken session
+    }
   }
   return { success: true };
+}
+
+/**
+ * Subscribes to Supabase authentication state changes (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED).
+ */
+export function subscribeToAuthChanges(callback) {
+  if (isSupabaseConfigured()) {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      callback(event, session);
+    });
+    return data?.subscription || { unsubscribe: () => {} };
+  }
+  return { unsubscribe: () => {} };
 }
 
 /**

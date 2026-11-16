@@ -9,6 +9,7 @@ import {
   signOutUser,
   getCurrentSession,
   updateAdminPassword,
+  subscribeToAuthChanges,
 } from './auth.js';
 import { evaluateTransactionRisk } from '../engine/riskEngine.js';
 import { buildBehaviourProfile } from '../engine/behaviourProfile.js';
@@ -62,6 +63,10 @@ export const api = {
 
   logout: async () => {
     return await signOutUser();
+  },
+
+  onAuthStateChange: (callback) => {
+    return subscribeToAuthChanges(callback);
   },
 
   changePassword: async (_currentPassword, newPassword) => {

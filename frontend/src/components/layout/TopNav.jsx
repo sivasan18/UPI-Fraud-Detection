@@ -4,10 +4,12 @@
 // Displays Authenticated Admin Username, Hamburger Toggle, Mode Badge, & Sign Out
 // ==============================================================================
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu, Bell, Lock, LogOut, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export default function TopNav({ onMenuToggle }) {
+  const navigate = useNavigate();
   const {
     currentMode,
     demoModeEnabled,
@@ -23,8 +25,10 @@ export default function TopNav({ onMenuToggle }) {
     setSignOutError('');
     try {
       await signOut();
+      navigate('/login', { replace: true });
     } catch (error) {
       setSignOutError(error?.message || 'Could not sign out. Try again.');
+      navigate('/login', { replace: true });
     }
   };
 
