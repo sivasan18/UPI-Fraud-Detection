@@ -1,0 +1,844 @@
+/* ==============================================================================
+   Smart UPI Fraud Detection System — Anime Hanging ID Card Stylesheet
+   Strict Three-Colour Palette: Black (#000000), Yellow (#facc15), White (#ffffff)
+   ============================================================================== */
+
+/* Screen Container with subtle high-tech cyber matrix */
+.hanging-screen {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #000000;
+  background-image:
+    radial-gradient(circle at 50% 15%, rgba(250, 204, 21, 0.08) 0%, rgba(0, 0, 0, 0.98) 75%),
+    linear-gradient(rgba(250, 204, 21, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 204, 21, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 1rem 4rem;
+  position: relative;
+  overflow-x: hidden;
+  perspective: 1400px;
+}
+
+/* ==============================================================================
+   1. Realistic Hanging Lanyard Strap & Chrome Buckle / Clasp
+   ============================================================================== */
+.lanyard-assembly {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  pointer-events: none;
+  z-index: 25;
+}
+
+/* Woven nylon lanyard strap suspended from top of viewport */
+.lanyard-strap {
+  width: 44px;
+  height: 95px;
+  background: #0a0a0a;
+  border-left: 2px solid rgba(250, 204, 21, 0.6);
+  border-right: 2px solid rgba(250, 204, 21, 0.6);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.95), inset 0 0 12px rgba(0, 0, 0, 0.9);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Gold woven text along the lanyard */
+.strap-text-container {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.strap-text {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #facc15;
+  text-shadow: 0 0 6px rgba(250, 204, 21, 0.5);
+  white-space: nowrap;
+}
+
+/* Metal Crimp Band */
+.lanyard-crimp {
+  width: 34px;
+  height: 10px;
+  background: linear-gradient(180deg, #d4d4d4 0%, #737373 50%, #404040 100%);
+  border-radius: 2px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -1px;
+}
+
+.crimp-rivet {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #171717;
+  border: 0.5px solid #a3a3a3;
+}
+
+/* Metal Clasp / Swivel Crocodile Clip */
+.lanyard-hardware {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -1px;
+}
+
+.metal-clasp {
+  width: 42px;
+  height: 24px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #a3a3a3 35%, #ffffff 50%, #525252 80%, #262626 100%);
+  border-radius: 5px;
+  border: 1px solid #737373;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.9), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 3px 0;
+  position: relative;
+}
+
+.clasp-ridge {
+  width: 28px;
+  height: 2px;
+  background: #404040;
+  border-radius: 1px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.clasp-shine {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  right: 3px;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  border-radius: 2px;
+}
+
+/* Polished Chrome D-Ring connecting to card slot */
+.metal-ring {
+  width: 22px;
+  height: 26px;
+  border: 3.5px solid #e5e5e5;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+  margin-top: -8px;
+  z-index: 15;
+}
+
+/* ==============================================================================
+   2. Suspended ID Card Physics & Sway Animation
+   ============================================================================== */
+.hanging-card-wrapper {
+  position: relative;
+  margin-top: -14px;
+  transform-origin: top center;
+  animation: lanyardSway 8s ease-in-out infinite;
+  z-index: 10;
+  width: min(94vw, 450px);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hanging-card-wrapper:hover {
+  animation-play-state: paused;
+  transform: rotate(0deg) scale(1.01) translateY(2px);
+}
+
+@keyframes lanyardSway {
+  0% {
+    transform: rotate(-1.5deg) translateY(0);
+  }
+
+  50% {
+    transform: rotate(1.2deg) translateY(3px);
+  }
+
+  100% {
+    transform: rotate(-1.5deg) translateY(0);
+  }
+}
+
+/* The Realistic Identity Card */
+.id-card {
+  width: 100%;
+  border: 2px solid #facc15;
+  border-radius: 26px;
+  background: linear-gradient(155deg, rgba(250, 204, 21, 0.05) 0%, rgba(18, 18, 18, 0.98) 25%, #080808 100%);
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.98),
+    0 0 35px rgba(250, 204, 21, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  padding: 1.25rem 1.65rem 1.65rem;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+/* Diagonal glass glare reflection across card face */
+.id-card-sheen {
+  position: absolute;
+  top: -80%;
+  left: -80%;
+  width: 260%;
+  height: 260%;
+  background: linear-gradient(130deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.04) 43%,
+      rgba(250, 204, 21, 0.08) 47%,
+      rgba(255, 255, 255, 0.04) 51%,
+      transparent 59%);
+  pointer-events: none;
+  transform: rotate(-18deg);
+  z-index: 1;
+}
+
+/* Punched oblong slot hole at card top */
+.id-card-slot {
+  width: 48px;
+  height: 10px;
+  border-radius: 6px;
+  background: #000000;
+  border: 1.5px solid rgba(250, 204, 21, 0.5);
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.95);
+  margin: 0 auto 0.9rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* ==============================================================================
+   3. Header: Ninja Registration & Serial Number
+   ============================================================================== */
+.id-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.85rem;
+  position: relative;
+  z-index: 2;
+}
+
+.id-card-title-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.id-card-title {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #facc15;
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+  text-transform: uppercase;
+}
+
+.id-card-reg-no {
+  position: absolute;
+  /* 2. Takes the reg number out of flex flow */
+  right: 0;
+  /* 3. Pins it to the far right corner */
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ==============================================================================
+   4. Four Administrator Selection Tabs (USER 1, USER 2, USER 3, USER 4)
+   ============================================================================== */
+.admin-selector-strip,
+.rank-selector-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.45rem;
+  margin-bottom: 1.15rem;
+  position: relative;
+  z-index: 2;
+}
+
+.admin-select-btn,
+.rank-select-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.25rem;
+  border-radius: 10px;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  background: rgba(18, 18, 18, 0.85);
+  color: #a3a3a3;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.admin-select-btn:hover,
+.rank-select-btn:hover {
+  border-color: #facc15;
+  color: #ffffff;
+  background: rgba(250, 204, 21, 0.1);
+  transform: translateY(-1px);
+}
+
+.admin-select-btn.active,
+.rank-select-btn.active {
+  background: #facc15;
+  color: #000000;
+  border-color: #facc15;
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.55);
+  transform: translateY(-2px);
+  font-weight: 800;
+}
+
+.admin-select-title,
+.rank-select-tag {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.rank-select-user {
+  font-size: 0.65rem;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+/* ==============================================================================
+   5. Center Portrait & Circular Rank Badge
+   ============================================================================== */
+.ninja-avatar-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Rounded Photograph Frame */
+.ninja-photo-frame {
+  width: 140px;
+  height: 160px;
+  border-radius: 18px;
+  border: 2px solid #facc15;
+  background: #121212;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.9),
+    0 0 25px rgba(250, 204, 21, 0.3);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ninja-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  transition: opacity 0.3s ease;
+}
+
+.ninja-photo-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #141414;
+}
+
+.fallback-ninja-svg {
+  width: 85%;
+  height: 85%;
+}
+
+/* Frame Corner Accents */
+.frame-corner {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-color: #ffffff;
+  pointer-events: none;
+}
+
+.frame-corner.top-left {
+  top: 3px;
+  left: 3px;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+}
+
+.frame-corner.top-right {
+  top: 3px;
+  right: 3px;
+  border-top: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
+}
+
+.frame-corner.bottom-left {
+  bottom: 3px;
+  left: 3px;
+  border-bottom: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+}
+
+.frame-corner.bottom-right {
+  bottom: 3px;
+  right: 3px;
+  border-bottom: 2px solid #ffffff;
+  border-right: 2px solid #ffffff;
+}
+
+/* Circular Dual-Ring Rank Badge */
+.ninja-rank-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-badge-outer {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2px solid #facc15;
+  background: rgba(14, 14, 14, 0.95);
+  box-shadow:
+    0 0 20px rgba(250, 204, 21, 0.35),
+    inset 0 0 12px rgba(250, 204, 21, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.rank-badge-inner {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px dashed rgba(250, 204, 21, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-badge-label {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #facc15;
+  line-height: 1;
+}
+
+.rank-badge-letter {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #facc15;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.7);
+}
+
+/* ==============================================================================
+   6. Identity Profile Typography & 2x2 Stats Grid
+   ============================================================================== */
+.ninja-identity-block {
+  text-align: center;
+  margin-bottom: 0.9rem;
+  position: relative;
+  z-index: 2;
+}
+
+.ninja-full-name {
+  font-size: 1.48rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.2rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.admin-editable-name {
+  cursor: pointer;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: 1px dashed transparent;
+}
+
+.admin-editable-name:hover {
+  background: rgba(250, 204, 21, 0.08);
+  border-color: rgba(250, 204, 21, 0.4);
+}
+
+.admin-name-edit-pencil {
+  font-size: 0.8rem;
+  color: #facc15;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.admin-editable-name:hover .admin-name-edit-pencil {
+  opacity: 1;
+}
+
+.admin-name-edit-input {
+  background: #0a0a0a;
+  border: 1.5px solid #facc15;
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 0.25rem 0.6rem;
+  outline: none;
+  width: 90%;
+  max-width: 260px;
+  margin: 0 auto 0.2rem;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
+  font-family: inherit;
+}
+
+.ninja-designation {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #facc15;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+}
+
+/* 2x2 Metadata Stats Grid */
+.ninja-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem 1rem;
+  padding: 0.65rem 0.9rem;
+  background: rgba(18, 18, 18, 0.75);
+  border: 1px solid rgba(250, 204, 21, 0.22);
+  border-radius: 12px;
+  margin-bottom: 0.85rem;
+  position: relative;
+  z-index: 2;
+}
+
+.ninja-stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.ninja-stat-label {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #a3a3a3;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.ninja-stat-value {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #f5f5f5;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* ==============================================================================
+   7. Barcode & Status Strip
+   ============================================================================== */
+.id-barcode-container {
+  margin-bottom: 1.15rem;
+  padding: 0 0.25rem;
+  position: relative;
+  z-index: 2;
+}
+
+.id-barcode-svg {
+  width: 100%;
+  height: 20px;
+  display: block;
+  opacity: 0.8;
+}
+
+.id-barcode-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+}
+
+.id-active-duty {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.duty-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow: 0 0 8px #facc15;
+  animation: dutyPulse 2s infinite;
+}
+
+@keyframes dutyPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 4px #facc15;
+  }
+
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px #facc15;
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 4px #facc15;
+  }
+}
+
+.duty-text {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #facc15;
+}
+
+.id-handle-text {
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #a3a3a3;
+}
+
+/* ==============================================================================
+   8. Form Controls: Username, Password & Solid Gold Sign-In Button
+   ============================================================================== */
+.id-login-section {
+  border-top: 1px dashed rgba(250, 204, 21, 0.35);
+  padding-top: 1.1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.id-input-group {
+  margin-bottom: 0.85rem;
+}
+
+.id-input-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #facc15;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.id-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.id-input-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: #facc15;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.id-text-input {
+  width: 100%;
+  min-height: 44px;
+  background: #0f0f0f;
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  border-radius: 10px;
+  padding: 0.55rem 2.6rem 0.55rem 2.5rem;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: 'Space Grotesk', monospace, sans-serif;
+}
+
+.id-text-input:focus {
+  border-color: #facc15;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.3), 0 0 14px rgba(250, 204, 21, 0.2);
+  background: #141414;
+}
+
+.id-password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  background: transparent;
+  border: 0;
+  color: #facc15;
+  cursor: pointer;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.id-password-toggle:hover {
+  background: rgba(250, 204, 21, 0.15);
+}
+
+/* Error Notice Banner */
+.id-login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.7);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  color: #facc15;
+  font-size: 0.82rem;
+  margin-bottom: 0.85rem;
+  line-height: 1.3;
+}
+
+/* Status Notice (e.g. Password changed) */
+.id-login-status {
+  background: rgba(250, 204, 21, 0.15);
+  border: 1px solid #facc15;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 0.85rem;
+}
+
+/* Solid Yellow Sign In Button */
+.id-signin-btn {
+  width: 100%;
+  min-height: 48px;
+  background: #facc15;
+  color: #000000;
+  border: 0;
+  border-radius: 12px;
+  font-family: 'Space Grotesk', monospace, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(250, 204, 21, 0.45);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0.5rem;
+}
+
+.id-signin-btn:hover:not(:disabled) {
+  background: #fde047;
+  box-shadow: 0 6px 26px rgba(250, 204, 21, 0.7);
+  transform: translateY(-2px);
+}
+
+.id-signin-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(250, 204, 21, 0.4);
+}
+
+.id-signin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Responsive Scaling for Small Displays */
+@media (max-width: 480px) {
+  .hanging-screen {
+    padding: 0 0.5rem 3rem;
+  }
+
+  .lanyard-strap {
+    height: 75px;
+    width: 38px;
+  }
+
+  .id-card {
+    padding: 1.1rem 1.25rem 1.25rem;
+    border-radius: 20px;
+  }
+
+  .ninja-photo-frame {
+    width: 120px;
+    height: 140px;
+  }
+
+  .rank-badge-outer {
+    width: 58px;
+    height: 58px;
+  }
+
+  .rank-badge-letter {
+    font-size: 1.25rem;
+  }
+
+  .ninja-full-name {
+    font-size: 1.28rem;
+  }
+
+  .ninja-designation {
+    font-size: 0.72rem;
+  }
+}
