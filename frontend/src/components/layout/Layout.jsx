@@ -6,12 +6,9 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
-import ModeSwitchModal from './ModeSwitchModal';
-import { useApp } from '../../context/AppContext';
 
 export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { isPasswordModalOpen, closePasswordModal } = useApp();
 
   const toggleSidebar = () => {
     setSidebarCollapsed((prev) => !prev);
@@ -29,11 +26,6 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
-      <ModeSwitchModal
-        isOpen={isPasswordModalOpen}
-        isLogin={false}
-        onClose={closePasswordModal}
-      />
     </div>
   );
 }

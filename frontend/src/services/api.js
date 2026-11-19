@@ -1,7 +1,35 @@
 // ==============================================================================
 // Smart UPI Fraud Detection System
 // Supabase PostgreSQL Data Layer & API Service (Direct Frontend Client)
-// No Flask. No Render. All four administrators share project data.
+//
+// ARCHITECTURE OVERVIEW:
+// ------------------------------------------------------------------------------
+// This file serves as the unified Data Access Layer (DAL) for the entire application.
+//
+// 1. DIRECT BROWSER-TO-SUPABASE ARCHITECTURE:
+//    - There is NO separate Python Flask or backend server required.
+//    - The React frontend connects directly to Supabase PostgreSQL using the
+//      official `@supabase/supabase-js` SDK.
+//    - Row Level Security (RLS) protects data tables in production.
+//
+// 2. ACTIVE MODE vs DEMO MODE PARTITIONING:
+//    - Both modes share the same database tables (`transactions`, `alerts`, etc.)
+//      but are partitioned using a `mode` column ('ACTIVE' vs 'DEMO').
+//    - Active Mode contains real confirmed transactions uploaded by administrators.
+//    - Demo Mode contains pre-configured synthetic transactions for demonstrations.
+//
+// 3. OFFLINE IN-MEMORY FALLBACK:
+//    - If Supabase environment variables are missing or during local testing,
+//      the application seamlessly falls back to `localStore` in memory.
+//
+// 4. DATABASE OPERATIONS SUMMARY:
+//    - `getDashboardStats()` : Calculates real-time transaction totals & averages.
+//    - `getTransactions()`   : Queries filtered transaction records with sorting.
+//    - `confirmTransaction()` : Validates data, runs 13-pattern analysis, and saves to DB.
+//    - `deleteTransaction()`  : Permanently removes a transaction record.
+//    - `getProfile()`        : Dynamically computes user spending mean and std-dev.
+//    - `getAlerts()`         : Retrieves active high/critical risk alerts.
+//    - `reviewAlert()`       : Marks an alert as reviewed by an administrator.
 // ==============================================================================
 import { supabase, isSupabaseConfigured } from './supabase.js';
 import {
@@ -619,11 +647,106 @@ export const api = {
   },
 
   seedDemoData: async () => {
-    const demoTxns = generateHistoricalTransactions(30);
-    for (const t of demoTxns) {
-      await api.confirmTransaction({ ...t, mode: 'DEMO' });
+    // 1. Check if Demo data is already seeded in localStore or Supabase
+    if (localStore.DEMO?.transactions?.length >= 20) {
+      return { success: true, count: localStore.DEMO.transactions.length };
     }
-    return { success: true };
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data: existing, error } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('mode', 'DEMO')
+          .limit(10);
+        if (!error && existing && existing.length >= 5) {
+          return { success: true, count: existing.length };
+        }
+      } catch (err) {
+        console.warn('[seedDemoData check error]:', err?.message);
+      }
+    }
+
+    // 2. Generate and prepare 30 realistic demo transactions
+    const rawDemoTxns = generateHistoricalTransactions(30) || [];
+    const preparedTxns = [];
+    const preparedAnalyses = [];
+
+    for (const t of rawDemoTxns) {
+      const cleanId = t.id || `TXN_DEMO_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const amount = parseFloat(t.amount) || 500;
+      const receiver = t.receiver || t.merchant || 'Demo Recipient';
+      const score = Number.isFinite(t.risk_score) ? t.risk_score : 18;
+      const level = t.risk_level || (score >= 60 ? 'HIGH' : score >= 30 ? 'MEDIUM' : 'LOW');
+      let factors = [];
+      try {
+        factors = typeof t.risk_factors === 'string' ? JSON.parse(t.risk_factors) : (t.risk_factors || []);
+      } catch {
+        factors = [];
+      }
+
+      const fullTxn = {
+        id: cleanId,
+        transaction_id: t.transaction_id || t.transactionId || cleanId,
+        mode: 'DEMO',
+        amount,
+        date: t.date || '15 May 2026',
+        date_iso: t.date_iso || '2026-05-15',
+        time: t.time || '10:30 AM',
+        hour: t.hour ?? 10,
+        minute: t.minute ?? 30,
+        sender: t.sender || 'Demo User',
+        sender_upi: t.sender_upi || 'demouser@upi',
+        receiver,
+        receiver_upi: t.receiver_upi || 'merchant@upi',
+        status: t.status || 'Completed',
+        merchant: t.merchant || receiver,
+        category: t.category || 'General',
+        location: t.location || 'Pondicherry',
+        device: t.device || 'Android App',
+        source_type: 'demo',
+        validated: 1,
+        risk_score: score,
+        risk_level: level,
+        risk_type: t.risk_type || 'Normal Transaction',
+        risk_factors: JSON.stringify(factors),
+        recommendation: t.recommendation || 'Standard demo benchmark transaction.',
+        remarks: 'Sample demo record for evaluation',
+        payment_mode: 'UPI',
+        bank: t.bank || 'HDFC Bank',
+        created_at: new Date().toISOString(),
+      };
+      preparedTxns.push(fullTxn);
+
+      preparedAnalyses.push({
+        transaction_id: cleanId,
+        mode: 'DEMO',
+        risk_score: score,
+        risk_level: level,
+        risk_type: fullTxn.risk_type,
+        factors: JSON.stringify(factors),
+        recommendation: fullTxn.recommendation,
+        rules_triggered: factors.map((f) => f.name || f).filter(Boolean),
+      });
+    }
+
+    // 3. Fast bulk save to Supabase in a single batch (if configured)
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase.from('transactions').upsert(preparedTxns);
+        await supabase.from('fraud_analyses').insert(preparedAnalyses);
+      } catch (err) {
+        console.warn('[seedDemoData batch insert error]:', err?.message);
+      }
+    }
+
+    // 4. Update in-memory localStore immediately
+    localStore.DEMO = {
+      ...localStore.DEMO,
+      transactions: preparedTxns,
+    };
+
+    return { success: true, count: preparedTxns.length };
   },
 };
 

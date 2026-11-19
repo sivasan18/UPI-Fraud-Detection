@@ -1,9 +1,26 @@
 // ==============================================================================
 // Smart UPI Fraud Detection System
-// Supabase Authentication & 4 Administrator Account Mapping
+// Supabase Authentication & 4 Administrator Account Mapping Service
+//
+// WHAT THIS SERVICE DOES:
+// ------------------------------------------------------------------------------
+// 1. Manages secure sign-in, session persistence, and sign-out for 4 Administrators.
+// 2. Maps simple usernames ('USER1', 'USER2', etc.) to internal Supabase Auth emails.
+// 3. Provides graceful offline fallback when Supabase keys are not set in `.env`.
+//
+// WHY USERNAME-TO-EMAIL MAPPING EXISTS:
+// - Supabase Auth natively authenticates using email + password.
+// - To keep the user interface beginner-friendly and realistic for an ID card,
+//   the frontend lets admins log in using 'USER1', 'USER2', etc.
+// - This service silently maps `USER1` -> `user1@achariyacollege.com` before calling Supabase.
 // ==============================================================================
 import { supabase, isSupabaseConfigured } from './supabase.js';
 
+// ------------------------------------------------------------------------------
+// Internal Administrator Directory
+// Maps each username to its registered Supabase Auth email.
+// (Note: UI display names like 'Gopika' live in `src/data/adminProfiles.js`!)
+// ------------------------------------------------------------------------------
 export const USER_DIRECTORY = {
   USER1: {
     username: 'USER1',
@@ -32,8 +49,8 @@ export const USER_DIRECTORY = {
 };
 
 /**
- * Resolves a username to its internal Supabase email address.
- * Case-insensitive lookup (e.g. 'user1' -> 'user1@achariyacollege.com').
+ * Resolves a friendly username into its internal Supabase email address.
+ * E.g., 'USER1' (or 'user1') becomes 'user1@achariyacollege.com'.
  */
 export function resolveUsernameToEmail(inputUsername) {
   if (!inputUsername) return null;
@@ -43,17 +60,18 @@ export function resolveUsernameToEmail(inputUsername) {
     return USER_DIRECTORY[normalized].email;
   }
 
-  // Future-proof: if username is configured directly or if input is already an email
+  // Future-proof: if input is already an email address, keep it
   if (inputUsername.includes('@')) {
     return inputUsername.trim().toLowerCase();
   }
 
-  // Fallback for custom username extension in future
+  // Fallback for custom username extensions
   return `${inputUsername.trim().toLowerCase()}@achariyacollege.com`;
 }
 
 /**
- * Resolves a Supabase email address back to the user's display username.
+ * Reverse lookup: Resolves a Supabase Auth email back to its username.
+ * E.g., 'user1@achariyacollege.com' becomes 'USER1'.
  */
 export function resolveEmailToUsername(email) {
   if (!email) return 'Admin';
@@ -68,6 +86,7 @@ export function resolveEmailToUsername(email) {
 
 /**
  * Signs in using username + password through Supabase Auth.
+ * Includes local offline fallback if Supabase credentials are not connected.
  */
 export async function signInWithUsername(username, password) {
   const normalizedUsername = (username || '').trim().toUpperCase();
@@ -77,8 +96,8 @@ export async function signInWithUsername(username, password) {
     throw new Error('Invalid username. Please enter USER1, USER2, USER3, or USER4.');
   }
 
+  // Offline / development fallback mode
   if (!isSupabaseConfigured()) {
-    // Development/Local mock when Supabase credentials are not yet supplied in .env
     const validUsers = ['USER1', 'USER2', 'USER3', 'USER4'];
     if (validUsers.includes(normalizedUsername) && password === 'admin123') {
       const mockSession = {
@@ -92,6 +111,7 @@ export async function signInWithUsername(username, password) {
     throw new Error('Invalid username or password (default: admin123).');
   }
 
+  // Live Supabase Authentication call
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -111,7 +131,7 @@ export async function signInWithUsername(username, password) {
 }
 
 /**
- * Signs out from Supabase Auth.
+ * Signs out from Supabase Auth and removes local session tokens.
  */
 export async function signOutUser() {
   localStorage.removeItem('upi-admin-local-session');
@@ -119,14 +139,14 @@ export async function signOutUser() {
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.warn('[Supabase signOut Notice]:', error.message);
-      // Still proceed with local signout so the user is never stuck in a broken session
+      // Still proceed with local signout so the user is never stuck
     }
   }
   return { success: true };
 }
 
 /**
- * Subscribes to Supabase authentication state changes (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED).
+ * Subscribes to Supabase authentication state changes (login, logout, token refresh).
  */
 export function subscribeToAuthChanges(callback) {
   if (isSupabaseConfigured()) {
@@ -139,9 +159,10 @@ export function subscribeToAuthChanges(callback) {
 }
 
 /**
- * Retrieves the current session (persisted across page reloads).
+ * Retrieves the current session (persisted in localStorage / Supabase across browser reloads).
  */
 export async function getCurrentSession() {
+  // Check offline local session
   if (!isSupabaseConfigured()) {
     const saved = localStorage.getItem('upi-admin-local-session');
     if (saved) {
@@ -160,6 +181,7 @@ export async function getCurrentSession() {
     return { authenticated: false, user: null, username: null };
   }
 
+  // Retrieve live Supabase session
   const { data, error } = await supabase.auth.getSession();
   if (error || !data?.session?.user) {
     return { authenticated: false, user: null, username: null };
@@ -175,7 +197,7 @@ export async function getCurrentSession() {
 }
 
 /**
- * Updates the current administrator's password.
+ * Updates the current administrator's password in Supabase Auth.
  */
 export async function updateAdminPassword(newPassword) {
   if (!isSupabaseConfigured()) {

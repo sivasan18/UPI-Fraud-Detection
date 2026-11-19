@@ -1,6 +1,21 @@
 // ==============================================================================
 // UPI Fraud Detection and Risk Assessment System
-// Dashboard Page (Clean, Elegant, Student-Project Style)
+// Main System Dashboard (Active Mode & Demo Mode Overview)
+//
+// WHAT THIS PAGE DISPLAYS:
+// ------------------------------------------------------------------------------
+// 1. KPI Metric Cards:
+//    - Total Transactions processed in current mode.
+//    - Valid / Low Risk transactions count.
+//    - Suspicious / Medium Risk transactions count.
+//    - High / Critical Risk alerts count.
+// 2. Quick Action Buttons:
+//    - "Upload UPI Screenshot" -> Direct navigation to OCR workflow.
+//    - "Live Fraud Analysis"   -> Direct navigation to manual tester.
+// 3. Recent Transactions Table:
+//    - Displays recent payments with Amount, Recipient, Date, and Risk Badge.
+//    - "View" button loads the full 13-pattern analysis breakdown.
+//    - "Delete" button permanently removes a record from Supabase.
 // ==============================================================================
 import React from 'react';
 import { useNavigate } from 'react-router-dom';

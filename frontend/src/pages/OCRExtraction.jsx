@@ -1,7 +1,19 @@
 // ==============================================================================
 // UPI Fraud Detection and Risk Assessment System
-// OCR Extraction & Layout-Aware Field Mapping Pipeline
-// App Recognition: BHIM / PhonePe / Google Pay
+// OCR Extraction & Layout-Aware Field Mapping Review Pipeline
+//
+// WHAT THIS PAGE DOES:
+// ------------------------------------------------------------------------------
+// 1. Receives the raw Tesseract.js OCR scan results from the upload screen.
+// 2. Shows the recognized UPI Application badge (Google Pay, PhonePe, BHIM, or General).
+// 3. Displays extracted fields with individual field confidence indicators:
+//    - Amount (₹)
+//    - Transaction / UTR ID
+//    - Recipient Name & Recipient UPI ID
+//    - Date & Time
+// 4. Human-in-the-Loop Verification:
+//    - Allows the administrator to review and manually edit any misread characters
+//      before confirming the transaction into Supabase.
 // ==============================================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

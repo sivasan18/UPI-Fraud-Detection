@@ -1,7 +1,35 @@
 // ==============================================================================
 // Fraud Detection and Risk Assessment System
 // Explainable AI (XAI) — 13-Pattern Behavioral Risk Engine (JavaScript Port)
-// Matches 100% of Python risk_engine.py rules, scoring, and explanations.
+//
+// WHAT THIS ENGINE DOES:
+// ------------------------------------------------------------------------------
+// This engine evaluates any UPI transaction against a user's behavioral baseline
+// and historical transaction stream. It calculates a dynamic Risk Score (0 to 100)
+// and explains EXACTLY WHY that score was assigned using 13 distinct fraud patterns.
+//
+// WHY EXPLAINABLE AI (XAI)?
+// Traditional AI models (like deep neural networks) act as "black boxes" — they output
+// a score without explaining why. In banking and fintech:
+//   1. Users demand transparent explanations for blocked or flagged payments.
+//   2. Administrators need clear evidence to verify whether an alert is real or false.
+//   3. Regulatory standards (RBI, NPCI) require transparent audit trails.
+//
+// THE 13 FRAUD PATTERNS (P1 TO P13):
+// ------------------------------------------------------------------------------
+// P1 : Repeated Same-Amount Transactions (Rapid automated bot retry)
+// P2 : Doubling/Multiplying Amount to Same Recipient (Account limit brute force)
+// P3 : Unusual Transaction Frequency Burst (Sudden transaction velocity spike)
+// P4 : Amount Outside Historical Range (Significantly exceeds user spending baseline)
+// P5 : New Recipient + Unusual High Amount (High-value transfer to unverified party)
+// P6 : New Recipient + Multiple Rapid Transactions (Social engineering / panic fraud)
+// P7 : Multiple Different Recipients in Short Period (Rapid wallet draining / scatter)
+// P8 : Unusual Time of Day / Late Night (Transactions between 11 PM and 5 AM)
+// P9 : Round / Structured Amount to New Recipient (Money laundering / structuring)
+// P10: Device Anomaly (Initiated from an unrecognized or newly registered device)
+// P11: Geographic / Location Anomaly (Initiated outside customary spending cities)
+// P12: Rapid Large-Value Transaction Spike (Sudden 3x spike over immediate session average)
+// P13: Small Initial Trial + Unexpected AutoPay Mandate (Deceptive recurring e-mandate)
 // ==============================================================================
 
 export const RISK_THRESHOLDS = {

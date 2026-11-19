@@ -14,7 +14,6 @@ export default function Settings() {
     currentMode,
     demoModeEnabled,
     databaseBackend,
-    openPasswordModal,
     clearModeData,
     removeDemoPermanently,
     enableDemoMode,
@@ -210,15 +209,14 @@ export default function Settings() {
               <div className="flex justify-between items-center flex-wrap gap-3">
                 <div>
                   <div className="font-semibold text-sm" style={{ color: '#ffffff' }}>
-                    {currentMode === 'ACTIVE' ? '● ACTIVE MODE (Default Real Storage)' : '● DEMO MODE (Synthetic Data Sandbox)'}
+                    {currentMode === 'ACTIVE' ? '● ACTIVE MODE (Real Supabase Storage)' : '● DEMO MODE (Synthetic Data Sandbox)'}
                   </div>
                   <div className="text-xs text-tertiary mt-1">
-                    Password-protected switch prevents accidental data mixing.
+                    {currentMode === 'ACTIVE'
+                      ? 'Administrator mode for genuine transaction verification. To switch modes, sign out and select Demo Mode at login.'
+                      : 'Presentation sandbox with pre-configured synthetic transactions. To switch modes, sign out and sign in as an Administrator.'}
                   </div>
                 </div>
-                <button className="btn btn-primary" onClick={openPasswordModal}>
-                  <Lock size={14} /> Switch to {currentMode === 'ACTIVE' ? 'Demo' : 'Active'} Mode
-                </button>
               </div>
             </div>
 

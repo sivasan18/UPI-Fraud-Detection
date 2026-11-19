@@ -1,7 +1,30 @@
 // ==============================================================================
 // Smart UPI Fraud Detection System
-// Global App Context & State Manager (Active Mode Default + Demo Isolation)
-// Direct Supabase Auth & PostgreSQL Integration
+// Global App Context & React State Manager
+//
+// WHAT THIS STATE MANAGER DOES:
+// ------------------------------------------------------------------------------
+// This file acts as the central brain (Global Store) of the React application.
+// Using React Context + useReducer, it manages:
+//
+// 1. AUTHENTICATION STATE:
+//    - `isAuthenticated`: `true` once Supabase Auth verifies admin credentials.
+//    - `sessionChecked`: Prevents blank screen / premature redirects during initial load.
+//    - `adminUsername`: Logged-in admin ('USER1', 'USER2', 'USER3', 'USER4').
+//
+// 2. ACTIVE MODE vs DEMO MODE:
+//    - `currentMode`: 'ACTIVE' (real Supabase data) vs 'DEMO' (synthetic demonstration data).
+//    - Mode switching is strictly governed by login or explicit admin actions.
+//
+// 3. OCR & FRAUD EVALUATION FLOW:
+//    - `ocrResult`: Scanned text and parsed fields from uploaded payment screenshots.
+//    - `currentTransaction`: Transaction data currently staged on the confirmation screen.
+//    - `currentAnalysis`: Real-time 13-pattern risk evaluation breakdown.
+//
+// 4. SHARED APP DATA:
+//    - `transactions`: List of all transactions in the current mode.
+//    - `behaviourProfile`: User baseline stats (spending average, std-dev, frequent contacts).
+//    - `alerts`: Active high-risk transactions requiring administrator review.
 // ==============================================================================
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +40,7 @@ const initialState = {
   adminRole: 'Administrator',
 
   // Mode Isolation: ACTIVE (default) vs DEMO
-  currentMode: 'ACTIVE',
+  currentMode: (typeof window !== 'undefined' && localStorage.getItem('upi_current_mode')) || 'ACTIVE',
   isPasswordModalOpen: false,
   demoModeEnabled: true,
   databaseBackend: 'Supabase PostgreSQL',
@@ -287,12 +310,38 @@ export function AppProvider({ children }) {
     return res.success;
   }, [navigate]);
 
+  const loginDemoMode = useCallback(async (password) => {
+    const res = await api.verifyModePassword(password);
+    if (!res.success) {
+      throw new Error('Incorrect administrator password. (Enter: admin123)');
+    }
+    dispatch({
+      type: 'SET_ADMIN_USER',
+      payload: {
+        authenticated: true,
+        username: 'DEMO_ADMIN',
+        role: 'Administrator',
+      },
+    });
+    dispatch({ type: 'SET_MODE', payload: 'DEMO' });
+    try {
+      localStorage.setItem('upi_current_mode', 'DEMO');
+    } catch {}
+    await api.seedDemoData();
+    await refreshData('DEMO');
+    navigate('/', { replace: true });
+    return true;
+  }, [refreshData, navigate]);
+
   const signOut = useCallback(async () => {
     try {
       await api.logout();
     } catch (err) {
       console.warn('[signOut Notice]:', err?.message);
     } finally {
+      try {
+        localStorage.removeItem('upi_current_mode');
+      } catch {}
       dispatch({ type: 'CLEAR_SESSION' });
       navigate('/login', { replace: true });
     }
@@ -312,6 +361,9 @@ export function AppProvider({ children }) {
       return false;
     }
     dispatch({ type: 'SET_MODE', payload: targetMode });
+    try {
+      localStorage.setItem('upi_current_mode', targetMode);
+    } catch {}
     if (targetMode === 'DEMO') {
       await api.seedDemoData();
     }
@@ -463,6 +515,7 @@ export function AppProvider({ children }) {
     ...state,
     refreshData,
     authenticate,
+    loginDemoMode,
     signOut,
     updatePassword,
     switchMode,

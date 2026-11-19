@@ -1,7 +1,16 @@
 // ==============================================================================
 // Smart UPI Fraud Detection System
 // Sidebar Navigation Component
-// Dynamic Active Mode vs Demo Mode Navigation Visibility
+//
+// WHAT THIS COMPONENT DOES:
+// ------------------------------------------------------------------------------
+// 1. Renders the expandable / collapsible left-hand navigation menu.
+// 2. Dynamically adapts navigation links depending on the active application mode:
+//    - `ACTIVE_NAV_SECTIONS`: Clean, focused menu for real administrator work
+//      (Dashboard, Upload, History, Fraud Analysis, Alerts, Reports, Settings, About).
+//    - `DEMO_NAV_SECTIONS`: Full presentation suite for college review
+//      (Includes Tutorial/How It Works, Behavioral Profile, Adaptive Learning, Monitoring).
+// 3. Highlight states: Automatically applies `.active` class to current route using `NavLink`.
 // ==============================================================================
 import React from 'react';
 import { NavLink } from 'react-router-dom';

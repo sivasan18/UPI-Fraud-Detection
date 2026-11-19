@@ -1,6 +1,17 @@
 // ==============================================================================
 // UPI Fraud Detection and Risk Assessment System
-// Analyse Transaction Page — Auto-Fill from History & 13-Pattern Evaluation
+// Manual Transaction Risk Analyzer & Live Simulator
+//
+// WHAT THIS PAGE DOES:
+// ------------------------------------------------------------------------------
+// 1. Allows administrators to manually test and inspect any hypothetical or past
+//    UPI payment against the 13 behavioral fraud patterns.
+// 2. Features:
+//    - "Auto-fill from History": Select any real past transaction to analyze.
+//    - "Pattern 13 Test Case Preset": Automatically fills a small ₹5 trial payment
+//      with an AutoPay mandate to test the deceptive subscription pattern.
+//    - Live 9-stage analysis execution pipeline with interactive progress steps.
+//    - Comprehensive 13-pattern status matrix showing which rules triggered.
 // ==============================================================================
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';

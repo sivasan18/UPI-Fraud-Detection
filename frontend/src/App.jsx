@@ -1,6 +1,27 @@
 // ==============================================================================
 // Smart UPI Fraud Detection System
-// Application Router with Centralized Route Protection & Logout Redirection
+// Application Router & Route Protection
+//
+// WHAT THIS COMPONENT DOES:
+// ------------------------------------------------------------------------------
+// This is the root routing component of the application using `react-router-dom`.
+//
+// 1. SESSION GUARD:
+//    - While Supabase Auth checks whether an existing JWT session exists in browser
+//      storage (`sessionChecked === false`), a clean loading spinner is shown.
+//    - This prevents a common bug: flickering or jumping back to `/login` on page refresh!
+//
+// 2. PUBLIC ROUTES:
+//    - `/login`: The hanging college ID card authentication screen.
+//    - If an already signed-in administrator visits `/login`, they are redirected to `/`.
+//
+// 3. PROTECTED ROUTES (`<ProtectedRoute>`):
+//    - Wraps all internal pages (Dashboard, Upload, OCR, Reports, Settings, etc.).
+//    - If an unauthenticated visitor tries to access these URLs directly,
+//      they are automatically blocked and redirected to `/login`.
+//
+// 4. LAYOUT SHELL (`<Layout>`):
+//    - Renders the shared Left Sidebar, Top Navigation Bar, and page container.
 // ==============================================================================
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useApp } from './context/AppContext';
@@ -27,7 +48,8 @@ import AboutProject from './pages/AboutProject';
 function App() {
   const { isAuthenticated, sessionChecked } = useApp();
 
-  // 1. Initial Session Verification Guard: Prevent premature redirects while Supabase resolves session
+  // 1. Initial Session Verification Guard:
+  // Prevents premature redirects while Supabase resolves the stored browser session
   if (!sessionChecked) {
     return (
       <main
@@ -63,7 +85,7 @@ function App() {
 
   return (
     <Routes>
-      {/* 2. Public Login Route: If authenticated user visits /login, redirect to Dashboard */}
+      {/* 2. Public Login Routes */}
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to="/" replace /> : <SignInPage />}
@@ -73,7 +95,7 @@ function App() {
         element={<Navigate to="/login" replace />}
       />
 
-      {/* 3. Protected Routes: All private application pages require authentication */}
+      {/* 3. Protected Application Routes (Requires Administrator Sign-In) */}
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
@@ -95,7 +117,7 @@ function App() {
         </Route>
       </Route>
 
-      {/* 4. Wildcard Catch-All: Redirect unknown paths to / (if authenticated) or /login */}
+      {/* 4. Wildcard Catch-All: Redirects any undefined URL to / or /login */}
       <Route
         path="*"
         element={<Navigate to={isAuthenticated ? '/' : '/login'} replace />}

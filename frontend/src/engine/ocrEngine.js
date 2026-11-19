@@ -1,12 +1,28 @@
 // ==============================================================================
 // Smart UPI Fraud Detection and Risk Assessment System
 // Client-Side OCR & Layout-Aware Heuristic Parser Engine (Tesseract.js WASM)
-// High-Accuracy Extraction for Google Pay, PhonePe, and BHIM UPI Screenshots
-// Zero backend dependency; screenshots are processed in memory and discarded.
+//
+// WHAT THIS ENGINE DOES:
+// ------------------------------------------------------------------------------
+// 1. Accepts UPI payment screenshots (PNG, JPG, WebP) directly in the browser.
+// 2. Preprocesses the image using an HTML5 Canvas to sharpen text & improve OCR accuracy.
+// 3. Runs Tesseract.js WebAssembly (WASM) locally in a background web worker.
+// 4. Automatically identifies the UPI application:
+//      - Google Pay (GPay)
+//      - PhonePe
+//      - BHIM UPI
+//      - General / Fallback UPI Receipt
+// 5. Extracts key transaction fields: Amount, Recipient Name, Recipient UPI ID,
+//    Sender UPI ID, UTR / Transaction ID, Date, Time, and Payment Status.
+// 6. Zero backend dependency: Screenshots NEVER leave the user's browser.
 // ==============================================================================
 import { createWorker } from 'tesseract.js';
 import { normalizeTransactionDate } from '../utils/dateUtils.js';
 
+// ------------------------------------------------------------------------------
+// Application Keyword Dictionaries
+// Used to classify which UPI app created the uploaded screenshot.
+// ------------------------------------------------------------------------------
 export const APP_KEYWORDS = {
   bhim: [
     'bhim', 'banking name', 'debited account', 'payment instrument',
@@ -20,12 +36,21 @@ export const APP_KEYWORDS = {
     'google pay', 'gpay', 'google transaction id', 'pay again',
     'csb', 'cicag', 'completed', 'to:', 'from:',
   ],
+  // ----------------------------------------------------------------------------
+  // FUTURE PAYTM INTEGRATION:
+  // To enable Paytm receipt detection, simply uncomment and add Paytm keywords:
+  // paytm: [
+  //   'paytm', 'paytm payments bank', 'wallet', 'money sent successfully',
+  //   'upi ref no', 'order id', 'passbook'
+  // ],
+  // ----------------------------------------------------------------------------
 };
 
 export const APP_DISPLAY_NAMES = {
   bhim: 'BHIM UPI',
   phonepe: 'PhonePe',
   googlepay: 'Google Pay',
+  // paytm: 'Paytm UPI', // Uncomment when adding Paytm
   unknown: 'General UPI Receipt',
 };
 
@@ -182,7 +207,14 @@ export function parseDateTimeStrings(fullText = '') {
 }
 
 /**
- * Detects the UPI application from recognized text keywords.
+ * SECTION 3: APP RECOGNITION (detectUpiApp)
+ * ------------------------------------------------------------------------------
+ * Scans the raw extracted text for characteristic phrases and brand keywords.
+ * Gives weighted scores:
+ *   - Google Pay: 'gpay', 'google transaction id', 'cicag', 'pay again'
+ *   - PhonePe: 'phonepe', 'transfer details', 'debited from', 'paid to'
+ *   - BHIM UPI: 'bhim', 'banking name', 'bharat\'s own', 'npci'
+ * Returns the highest scoring app and a calculated confidence percentage.
  */
 export function detectUpiApp(fullText = '') {
   const textLower = fullText.toLowerCase();
@@ -196,6 +228,7 @@ export function detectUpiApp(fullText = '') {
     }
   }
 
+  // Strong brand indicators receive higher weighting
   if (textLower.includes('bhim') || textLower.includes('banking name') || textLower.includes('bharat\'s own')) scores.bhim += 6;
   if (textLower.includes('phonepe') || textLower.includes('phonepe transaction id') || textLower.includes('transfer details')) scores.phonepe += 6;
   if (textLower.includes('google pay') || textLower.includes('gpay') || textLower.includes('google transaction id') || textLower.includes('cicag')) scores.googlepay += 6;
@@ -222,7 +255,14 @@ export function detectUpiApp(fullText = '') {
 }
 
 /**
- * Layout Parser: Google Pay
+ * SECTION 4: GOOGLE PAY LAYOUT PARSER (extractGooglePayLayout)
+ * ------------------------------------------------------------------------------
+ * Google Pay Mobile Receipts follow a distinct visual hierarchy:
+ * 1. Amount: The large central currency figure immediately preceding the "Completed" badge.
+ * 2. Recipient: The contact name or business header appearing near the top.
+ * 3. UPI ID: Suffix pattern e.g., `@oksbi`, `@okhdfcbank`, `@okaxis`, `@okicici`.
+ * 4. Google Transaction ID: Alphanumeric reference string (e.g., CICAg...).
+ * 5. UTR: 12-digit numeric reference issued by the banking switch (NPCI).
  */
 export function extractGooglePayLayout(lines = [], fullText = '') {
   const dt = parseDateTimeStrings(fullText);
@@ -315,7 +355,14 @@ export function extractGooglePayLayout(lines = [], fullText = '') {
 }
 
 /**
- * Layout Parser: PhonePe
+ * SECTION 5: PHONEPE LAYOUT PARSER (extractPhonePeLayout)
+ * ------------------------------------------------------------------------------
+ * PhonePe receipts feature a clean, card-based layout:
+ * 1. Amount: Usually found under the header "Transfer Details" or "Paid to".
+ * 2. Recipient Name: Directly below the "Paid to" text indicator.
+ * 3. PhonePe Transaction ID: Starts with letter 'T' followed by 18-24 digits.
+ * 4. UTR: 12-digit Unique Transaction Reference labeled as "UTR : XXXXXXXXXXXX".
+ * 5. Payment Mode: "PhonePe UPI".
  */
 export function extractPhonePeLayout(lines = [], fullText = '') {
   const dt = parseDateTimeStrings(fullText);
@@ -382,7 +429,14 @@ export function extractPhonePeLayout(lines = [], fullText = '') {
 }
 
 /**
- * Layout Parser: BHIM UPI
+ * SECTION 6: BHIM UPI LAYOUT PARSER (extractBhimLayout)
+ * ------------------------------------------------------------------------------
+ * BHIM (Bharat Interface for Money) receipts follow NPCI standards:
+ * 1. Amount: Displayed at top header with Rupee symbol.
+ * 2. Recipient Name: Stored under "Banking Name" row.
+ * 3. UPI IDs: Frequently split into "To UPI ID" and "From UPI ID" (@upi, @oksbi).
+ * 4. Transaction ID / UTR: Standard 12-digit numeric NPCI switch reference.
+ * 5. Bank / Remarks: Extracted from "Debited Account" and "Remarks" sections.
  */
 export function extractBhimLayout(lines = [], fullText = '') {
   const dt = parseDateTimeStrings(fullText);
@@ -466,7 +520,49 @@ export function extractBhimLayout(lines = [], fullText = '') {
 }
 
 /**
- * Fallback Parser: General UPI Receipt
+ * ------------------------------------------------------------------------------
+ * FUTURE INTEGRATION GUIDE: PAYTM UPI LAYOUT PARSER
+ * ------------------------------------------------------------------------------
+ * To add Paytm support in the future:
+ * 1. Add 'paytm' keywords to `APP_KEYWORDS` at the top of this file.
+ * 2. Implement `extractPaytmLayout(lines, fullText)` similar to the snippet below:
+ *
+ * export function extractPaytmLayout(lines = [], fullText = '') {
+ *   const dt = parseDateTimeStrings(fullText);
+ *   let amount = null;
+ *   // Paytm usually shows "₹XXX.XX" near "Money Sent Successfully"
+ *   for (const l of lines) {
+ *     const amt = cleanAmountValue(l);
+ *     if (amt && amt >= 10) { amount = amt; break; }
+ *   }
+ *   // UTR is labeled "UPI Ref No: XXXXXXXXXXXX"
+ *   let utr = '';
+ *   const utrMatch = fullText.match(/upi\s*ref\s*(?:no\.?)?\s*:?\s*(\d{12})/i);
+ *   if (utrMatch) utr = utrMatch[1];
+ *   return {
+ *     amount,
+ *     receiver: 'Paytm Merchant / Contact',
+ *     receiver_upi: '',
+ *     sender_upi: '',
+ *     transaction_id: utr,
+ *     utr,
+ *     date: dt.date,
+ *     time: dt.time,
+ *     status: 'Completed',
+ *     payment_mode: 'Paytm UPI',
+ *   };
+ * }
+ * 3. In `processStatement()` below, add:
+ *    `if (detectedApp.app === 'paytm') return extractPaytmLayout(lines, fullText);`
+ * ------------------------------------------------------------------------------
+ */
+
+/**
+ * SECTION 7: GENERAL / FALLBACK UPI LAYOUT PARSER (extractGeneralLayout)
+ * ------------------------------------------------------------------------------
+ * Used when a receipt does not match specific GPay, PhonePe, or BHIM templates
+ * (e.g., bank-specific apps like YONO SBI, iMobile, Amazon Pay, or generic slips).
+ * Uses universal regex pattern matching across all lines.
  */
 export function extractGeneralLayout(lines = [], fullText = '') {
   const dt = parseDateTimeStrings(fullText);

@@ -1,19 +1,27 @@
 // ==============================================================================
 // Smart UPI Fraud Detection System
-// Top Navigation Header
-// Displays Authenticated Admin Username, Hamburger Toggle, Mode Badge, & Sign Out
+// Top Navigation Header Component
+//
+// WHAT THIS COMPONENT DISPLAYS:
+// ------------------------------------------------------------------------------
+// 1. Sidebar Toggle Button (Hamburger icon for collapsing / expanding the menu).
+// 2. Application Logo & Project Title.
+// 3. Authenticated Administrator Badge (e.g., `USER 1 [Admin]`).
+// 4. Demo Mode Indicator (shown exclusively when running in Demo Mode).
+// 5. Active Alerts Bell Icon (with real-time unread alert count badge).
+// 6. Sign Out Button:
+//    - Safely terminates the Supabase Auth session and returns the user to the
+//      Sign-In page. (This is how users switch between Active and Demo modes).
 // ==============================================================================
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bell, Lock, LogOut, User } from 'lucide-react';
+import { Menu, Bell, LogOut, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export default function TopNav({ onMenuToggle }) {
   const navigate = useNavigate();
   const {
     currentMode,
-    demoModeEnabled,
-    openPasswordModal,
     alerts,
     signOut,
     adminUsername,
@@ -87,29 +95,16 @@ export default function TopNav({ onMenuToggle }) {
           <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>[Admin]</span>
         </div>
 
-        {/* Mode Badge */}
-        <div className={`mode-badge ${currentMode === 'ACTIVE' ? 'active-mode' : 'demo-mode'}`}>
-          <span>{currentMode === 'ACTIVE' ? '● ACTIVE MODE' : '● DEMO MODE'}</span>
-        </div>
-
-        {/* Demo Mode Synthetic Data Banner */}
+        {/* Demo Mode Badge & Synthetic Data Banner (hidden in Active Mode for clean Admin view) */}
         {currentMode === 'DEMO' && (
-          <span className="badge badge-high" style={{ fontSize: '0.62rem', padding: '3px 8px' }}>
-            SYNTHETIC DATA
-          </span>
-        )}
-
-        {/* Switch Mode Button */}
-        {demoModeEnabled && (
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={openPasswordModal}
-            title="Switch between Active and Demo Modes"
-            style={{ borderColor: 'var(--yellow-border)' }}
-          >
-            <Lock size={13} color="var(--yellow-light)" />
-            <span>Switch to {currentMode === 'ACTIVE' ? 'Demo' : 'Active'} Mode</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div className="mode-badge demo-mode">
+              <span>● DEMO MODE</span>
+            </div>
+            <span className="badge badge-high" style={{ fontSize: '0.62rem', padding: '3px 8px' }}>
+              SYNTHETIC DATA
+            </span>
+          </div>
         )}
 
         {/* Alerts Notification Icon */}

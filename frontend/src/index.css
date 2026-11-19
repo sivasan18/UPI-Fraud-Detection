@@ -1,6 +1,20 @@
 /* ==============================================================================
-   Smart UPI Fraud Detection System
-   Theme: FIXED BLACK + YELLOW + WHITE (Modern Cybersecurity & AI Fintech)
+   Smart UPI Fraud Detection System — Global Design System & Stylesheet
+   Theme: STRICT BLACK + YELLOW + WHITE (Modern Cybersecurity & Fintech UI)
+
+   STUDENT DESIGN GUIDE FOR MANUAL EDITS:
+   ------------------------------------------------------------------------------
+   1. COLOR SYSTEM (Lines 15-60):
+      - `--bg-primary` (#060606) & `--bg-card` (#101010): Pure black backgrounds.
+      - `--yellow-primary` (#facc15): The signature college gold/yellow accent.
+      - `--text-primary` (#f5f5f5): Clean high-contrast white text.
+   2. BUTTONS & CONTROLS:
+      - `.btn-primary`: Solid yellow button with black text.
+      - `.btn-secondary`: Outlined dark button with yellow border.
+   3. CARDS & PANELS:
+      - `.card`: Dark elevated panel with yellow border and rounded corners.
+   4. RISK BADGES:
+      - `.badge-low`, `.badge-medium`, `.badge-high`, `.badge-critical`.
    ============================================================================== */
 
 :root {

@@ -491,48 +491,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-}
-
-.admin-editable-name {
-  cursor: pointer;
-  padding: 0.15rem 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  border: 1px dashed transparent;
-}
-
-.admin-editable-name:hover {
-  background: rgba(250, 204, 21, 0.08);
-  border-color: rgba(250, 204, 21, 0.4);
-}
-
-.admin-name-edit-pencil {
-  font-size: 0.8rem;
-  color: #facc15;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
-}
-
-.admin-editable-name:hover .admin-name-edit-pencil {
-  opacity: 1;
-}
-
-.admin-name-edit-input {
-  background: #0a0a0a;
-  border: 1.5px solid #facc15;
-  color: #ffffff;
-  border-radius: 8px;
-  font-size: 1.35rem;
-  font-weight: 800;
-  text-align: center;
-  padding: 0.25rem 0.6rem;
-  outline: none;
-  width: 90%;
-  max-width: 260px;
-  margin: 0 auto 0.2rem;
-  box-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
-  font-family: inherit;
 }
 
 .ninja-designation {

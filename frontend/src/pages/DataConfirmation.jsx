@@ -1,6 +1,17 @@
 // ==============================================================================
 // UPI Fraud Detection and Risk Assessment System
-// Verify Extracted Data & Save Confirmation Page
+// Transaction Verification & Supabase Save Confirmation Screen
+//
+// WHAT THIS PAGE DOES:
+// ------------------------------------------------------------------------------
+// 1. Acts as the final quality checkpoint before data enters the PostgreSQL database.
+// 2. Normalizes the transaction date and time using standard utilities (`dateUtils.js`).
+// 3. When the user clicks "Confirm & Analyze":
+//    - The transaction is evaluated across all 13 behavioral fraud patterns.
+//    - The transaction record is written to Supabase (`transactions` table).
+//    - The detailed analysis record is written to Supabase (`analyses` table).
+//    - If high or critical risk is detected, a security alert is generated (`alerts` table).
+//    - Automatically navigates to `/result` to display the XAI Risk Breakdown.
 // ==============================================================================
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

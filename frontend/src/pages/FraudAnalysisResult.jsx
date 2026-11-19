@@ -1,6 +1,18 @@
 // ==============================================================================
 // UPI Fraud Detection and Risk Assessment System
-// Fraud Analysis Result Page (Clean, Student-Friendly Output)
+// Explainable AI (XAI) Fraud Analysis Result Page
+//
+// WHAT THIS PAGE PRESENTS:
+// ------------------------------------------------------------------------------
+// 1. Overall Risk Score Gauge (0 to 100) & Categorical Risk Level Badge:
+//    - LOW (0 - 29)      : Safe / Expected behavior
+//    - MEDIUM (30 - 59)  : Suspicious / Elevated caution advised
+//    - HIGH (60 - 79)    : High Risk / Strong anomaly signals detected
+//    - CRITICAL (80 - 100): Critical Alert / Probable unauthorized activity
+// 2. "Why?" Section — Transparent Factor Contributions:
+//    - Lists each triggered pattern with its individual point contribution (+points).
+// 3. "What Next?" — Actionable Security Recommendations:
+//    - Guidance for the user (e.g. verify recipient, block UPI handle, freeze account).
 // ==============================================================================
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
