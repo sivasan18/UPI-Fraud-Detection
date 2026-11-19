@@ -1,138 +1,94 @@
 # UPI Fraud Detection and Risk Assessment System
-> **Undergraduate B.Tech Final-Year Project**  
-> *Department of Computer Science & Engineering*
 
----
+**B.Tech Final-Year Project · Department of Computer Science & Engineering**
 
-## 🌟 Project Overview
+This project is a web application for reviewing UPI transactions and highlighting behavior that may indicate fraud. This README is organized as two short reviews so the project can be explained clearly during a guide or coordinator discussion.
 
-**UPI Fraud Detection and Risk Assessment System** is a lightweight, explainable, and production-ready cybersecurity application for detecting fraudulent UPI transactions and assessing risk against behavioral baselines.
+## Review 1 — Security Review
 
-### 📐 Simplified Modern Architecture
-* **Frontend**: React 19 + Vite (Strict three-color palette: Black `#000000`, Yellow `#facc15`, White `#ffffff`).
-* **Source Code**: GitHub Repository.
-* **Database**: Supabase PostgreSQL.
-* **Authentication**: Supabase Auth (4 Administrator accounts with username-to-email mapping).
-* **Hosting**: Vercel.
-* **OCR Pipeline**: Client-side WebAssembly (`tesseract.js`) with dedicated layout parsers for **BHIM**, **PhonePe**, and **Google Pay**.
-* **Risk Engine**: 13 Suspicious Behavioral Patterns (P1–P13) with Explainable AI (XAI) rationale and actionable safety recommendations.
-* **Zero Backend Hosting Overhead**: No Flask, no Render, no secondary server or API proxies.
+### Overall assessment
 
----
+The application uses Supabase Auth for sign-in and PostgreSQL Row Level Security (RLS) for database access. In the connected Supabase project reviewed on 16 November 2026, RLS was enabled on the application tables and the live policies restricted access to the project's four administrator accounts. The local migration file does not match that live restriction and should be corrected before it is run again.
 
-## 🔄 End-to-End Workflow
+### Findings and recommended actions
 
-```
-UPI Screenshot / Statement Upload
-   ↓
-Client-Side OCR (Tesseract.js WASM)
-   ↓
-App Recognition (BHIM / PhonePe / Google Pay)
-   ↓
-Field Extraction (Amount, Receiver, UPI ID, UTR, Date, Time, Mandates)
-   ↓
-Interactive Verification & Data Confirmation (/confirm)
-   ↓
-Persisted Directly to Supabase PostgreSQL (Shared for all 4 Admins)
-   ↓
-13-Pattern Behavioral Fraud Assessment (P1–P13)
-   ↓
-Explainable Output: Risk Score, Severity Gauge, "Why?" Explanation, & "What Next?" Guidance
-```
+1. **Remove default credentials from documentation.** Earlier project documentation listed one shared default password for all administrator accounts. That password has been removed from this README. If any account still uses it, change it in Supabase Auth and give each administrator a unique password.
+2. **Keep database rules restrictive.** The checked-in migration grants broad access to every authenticated Supabase user, while the live database currently limits access to the four intended administrators. Update the migration to preserve the live allowlist before running or sharing it.
+3. **Do not rely on browser checks for administrative security.** The Active/Demo mode confirmation and demo controls compare a password in frontend code. These checks can be bypassed and should be treated as interface prompts, not as protection for database operations.
+4. **Review the Supabase security advisories.** The live project reported a public `SECURITY DEFINER` function named `public.rls_auto_enable()` and disabled leaked-password protection. Review whether the function needs public execution and enable compromised-password checks for Auth.
+5. **Treat risk scores as decision support.** Fraud scoring runs in the browser, and some monitoring metrics are fixed display values in the frontend. They are not a substitute for independently measured model performance or server-side enforcement.
 
----
+### Security terms in plain language
 
-## 👥 Administrator Accounts & Authentication
+- **Authentication** checks who has signed in.
+- **Row Level Security (RLS)** makes the database check which rows that signed-in account may read or change. It still applies when someone calls the database API outside the website.
+- A Supabase **publishable key** is designed to be used by a browser. RLS and database grants must protect the data; a browser key does not make a table private by itself.
+- A password prompt or hidden page in the frontend is not an access-control boundary. Important permissions must be enforced by Supabase policies or a trusted server.
 
-The application provides equal administrative access to all four designated project administrators. Users sign in using their **Username** and **Password** (no email input field displayed on the login screen):
+## Review 2 — Website Summary and Project Flow
 
-| Username | Mapped Supabase Auth Email | Default Password | Role |
-| :--- | :--- | :--- | :--- |
-| **USER1** | `user1@achariyacollege.com` | `admin123` | Administrator |
-| **USER2** | `user2@achariyacollege.com` | `admin123` | Administrator |
-| **USER3** | `user3@achariyacollege.com` | `admin123` | Administrator |
-| **USER4** | `user4@achariyacollege.com` | `admin123` | Administrator |
+### Project purpose
 
-* **Session Persistence**: Sessions persist across browser page refreshes via Supabase Auth.
-* **Header Integration**: The top navigation bar displays the active administrator's username (e.g. `USER1 [Admin]`) and provides a **Sign Out** button.
-* **Independent Password Reset**: Each administrator can update their password independently in the application under **Settings** or via the Supabase Dashboard.
+The site helps administrators inspect UPI payment records and spot suspicious behavior. It extracts transaction details, compares them with transaction history, and presents a risk score with an explanation and suggested next steps. It is a project demonstration and review tool; a risk score is an indicator for human review, not proof that a transaction is fraudulent or safe.
 
-### Creating Accounts in Supabase Dashboard
-1. Go to your [Supabase Dashboard](https://supabase.com/dashboard).
-2. Navigate to **Authentication** → **Users**.
-3. Click **Add User** → **Create User** for each of the 4 accounts:
-   - `user1@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
-   - `user2@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
-   - `user3@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
-   - `user4@achariyacollege.com` / `admin123` (Auto-confirm email: **Checked**)
+### Main components
 
----
+| Component | Purpose |
+| --- | --- |
+| React 19 and Vite frontend | Provides the dashboard, transaction forms, history, alerts, reports, settings, and demo screens. |
+| Tesseract.js WebAssembly OCR | Reads supported UPI screenshots and statements in the browser. App-specific parsing supports BHIM, PhonePe, and Google Pay layouts. |
+| Behavioral risk engine | Applies 13 rule-based patterns to a transaction and available history, then returns a score, detected patterns, explanations, and recommendations. |
+| Supabase Auth | Signs in the project administrators and maintains their sessions. |
+| Supabase PostgreSQL | Stores transactions, fraud analyses, alerts, validated samples, and model-monitoring records. |
+| Vercel | Hosts the web frontend. The browser connects directly to Supabase; there is no separate Flask or application server in this architecture. |
 
-## 🗄️ Database Setup & SQL Migration
+### End-to-end flow
 
-Run the provided migration script [`supabase/supabase_auth_migration.sql`](./supabase/supabase_auth_migration.sql) in your Supabase SQL Editor:
-1. Removes obsolete Flask session tables (`admin_sessions`, `auth_login_attempts`, `admin_audit_logs`).
-2. Retains all application transaction tables:
-   - `public.transactions`
-   - `public.fraud_analyses`
-   - `public.alerts`
-   - `public.validated_samples`
-   - `public.training_runs`
-   - `public.system_config`
-3. Grants table privileges and applies Row Level Security (RLS) policies so all 4 authenticated administrators share access to the same records.
-
----
-
-## 🧭 Navigation & Page Visibility
-
-### Active Mode (Default)
-In Active Mode, only production monitoring and management items are displayed:
-* **OVERVIEW**: Dashboard
-* **TRANSACTIONS**: Upload Transactions, Transaction History
-* **INTELLIGENCE**: Fraud Analysis, Alerts, Reports
-* **SYSTEM**: Settings, About Project
-
-*(Demo-only presentation pages such as "How It Works", "Behaviour Profile", "Adaptive Learning", and "Model Monitoring" are hidden in Active Mode).*
-
-### Demo Mode
-In Demo Mode, all 17 presentation, tutorial, and simulation pages are available:
-* Switch between modes using the **Switch Mode** button in the header (Confirmation password: `admin123`).
-* Demo transactions and active transactions remain strictly isolated using the `mode` flag.
-
-### 🍔 Sidebar Collapse / Full-Width Content
-* Clicking the three-horizontal-line **hamburger icon** in the header collapses the left navigation sidebar completely.
-* The main content area expands smoothly to 100% full screen width, providing wider charts, tables, and inspection views.
-* Clicking the hamburger icon again restores the sidebar on the left side.
-
----
-
-## ⚡ Local Development & Vercel Deployment
-
-### 1. Local Development
-```bash
-# Clone the repository
-git clone https://github.com/sivasan18/UPI-Fraud-Detection.git
-cd UPI-Fraud-Detection
-
-# Set environment variables
-cp .env.example frontend/.env
-# Add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env
-
-# Install dependencies and start Vite dev server
-cd frontend
-npm install
-npm run dev
+```text
+Upload a screenshot or statement, or enter a transaction manually
+                         ↓
+Run OCR and recognize the payment-app layout in the browser
+                         ↓
+Review and confirm extracted transaction details
+                         ↓
+Save confirmed data to Supabase PostgreSQL
+                         ↓
+Compare the transaction with available history using 13 rule-based patterns
+                         ↓
+Show a risk level, score, explanation, and recommended next steps
 ```
 
-### 2. Deploy to Vercel
-1. Push this repository to GitHub.
-2. Go to [Vercel Dashboard](https://vercel.com/) and click **New Project** → Import the GitHub repository.
-3. Configure the project:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `frontend` (or leave root with the included `vercel.json`)
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-4. Add Environment Variables in Vercel:
-   - `VITE_SUPABASE_URL`: `https://eojjgcmdxkavnqzkjkjr.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY`: *(Your Supabase publishable anon key)*
-5. Click **Deploy**.
+### What the 13-pattern engine looks for
+
+The rules cover repeated same-amount payments, escalating amounts, transaction bursts, amounts that differ from a user's baseline, new recipients, rapid repeats to recipients, unusual timing or location, unfamiliar devices, sudden high-value activity, and unexpected AutoPay or recurring-payment behavior. Some checks need sufficient transaction history; results can be less informative when there is little data.
+
+### Active and Demo modes
+
+- **Active Mode** is intended for the project's working transaction records.
+- **Demo Mode** uses separate synthetic examples for presentations and walkthroughs.
+- The site has pages for the dashboard, transaction upload and history, fraud analysis, alerts, reports, settings, tutorials, behavior profiles, adaptive-learning demonstrations, and model monitoring.
+
+## Local Development
+
+1. Clone the repository and enter the `frontend` directory.
+2. Copy `frontend/.env.example` to `frontend/.env`.
+3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the project's Supabase URL and publishable key. Do not put a Supabase `service_role` key in frontend environment variables.
+4. Install dependencies and start the development server:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+## Deployment
+
+The frontend is deployed on Vercel. Configure the project to build the `frontend` application with `npm run build` and publish its `dist` directory. Add the Supabase URL and publishable key as Vercel environment variables, then deploy. Database access remains controlled by Supabase grants and RLS policies.
+
+## Database Files
+
+- [`supabase/schema.sql`](supabase/schema.sql) — application table definitions and initial policies.
+- [`supabase/supabase_auth_migration.sql`](supabase/supabase_auth_migration.sql) — migration for Supabase Auth and shared administrator access. **Review and align its policies with the restricted live database policies before running it.**
+
+## Repository
+
+[UPI-Fraud-Detection on GitHub](https://github.com/sivasan18/UPI-Fraud-Detection)
