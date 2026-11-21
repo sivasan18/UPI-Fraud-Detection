@@ -27,6 +27,7 @@ const APP_BADGES = {
   bhim: { name: 'BHIM UPI', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
   phonepe: { name: 'PhonePe', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
   googlepay: { name: 'Google Pay', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
+  paytm: { name: 'Paytm UPI', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
   unknown: { name: 'General UPI Receipt', color: '#a1a1a1', bg: 'rgba(161, 161, 161, 0.12)', border: 'rgba(161, 161, 161, 0.35)' },
 };
 

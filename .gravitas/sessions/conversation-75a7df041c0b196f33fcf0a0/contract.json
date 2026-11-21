@@ -1,0 +1,32 @@
+{
+  "mode": "implement",
+  "objective": "Stage 1: Paytm OCR integration and multi-provider verification",
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "statement": "Paytm OCR integration with accuracy and validation",
+      "validators": [
+        "paytm-ocr-validator"
+      ]
+    }
+  ],
+  "validators": [
+    {
+      "id": "paytm-ocr-validator",
+      "command": [
+        "node",
+        "frontend/test-all-ocr.mjs"
+      ],
+      "criterion_ids": [
+        "AC1"
+      ]
+    }
+  ],
+  "risk": "medium",
+  "budget": "balanced",
+  "allowed_write_scope": [
+    "/Users/tsr/Downloads/Anti-Gravity/UPI V3",
+    "."
+  ],
+  "verification": "targeted"
+}

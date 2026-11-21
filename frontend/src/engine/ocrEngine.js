@@ -36,21 +36,19 @@ export const APP_KEYWORDS = {
     'google pay', 'gpay', 'google transaction id', 'pay again',
     'csb', 'cicag', 'completed', 'to:', 'from:',
   ],
-  // ----------------------------------------------------------------------------
-  // FUTURE PAYTM INTEGRATION:
-  // To enable Paytm receipt detection, simply uncomment and add Paytm keywords:
-  // paytm: [
-  //   'paytm', 'paytm payments bank', 'wallet', 'money sent successfully',
-  //   'upi ref no', 'order id', 'passbook'
-  // ],
-  // ----------------------------------------------------------------------------
+  paytm: [
+    'paytm', 'paytm payments bank', 'wallet', 'paid successfully',
+    'money sent successfully', 'payment successful', 'bill payment successful',
+    'split this payment', 'upi ref no', 'order id', 'passbook', '@paytm',
+    'add tag', 'check balance',
+  ],
 };
 
 export const APP_DISPLAY_NAMES = {
   bhim: 'BHIM UPI',
   phonepe: 'PhonePe',
   googlepay: 'Google Pay',
-  // paytm: 'Paytm UPI', // Uncomment when adding Paytm
+  paytm: 'Paytm UPI',
   unknown: 'General UPI Receipt',
 };
 
@@ -218,7 +216,7 @@ export function parseDateTimeStrings(fullText = '') {
  */
 export function detectUpiApp(fullText = '') {
   const textLower = fullText.toLowerCase();
-  const scores = { bhim: 0, phonepe: 0, googlepay: 0 };
+  const scores = { bhim: 0, phonepe: 0, googlepay: 0, paytm: 0 };
 
   for (const [app, kws] of Object.entries(APP_KEYWORDS)) {
     for (const kw of kws) {
@@ -232,6 +230,7 @@ export function detectUpiApp(fullText = '') {
   if (textLower.includes('bhim') || textLower.includes('banking name') || textLower.includes('bharat\'s own')) scores.bhim += 6;
   if (textLower.includes('phonepe') || textLower.includes('phonepe transaction id') || textLower.includes('transfer details')) scores.phonepe += 6;
   if (textLower.includes('google pay') || textLower.includes('gpay') || textLower.includes('google transaction id') || textLower.includes('cicag')) scores.googlepay += 6;
+  if (textLower.includes('paytm') || textLower.includes('paid successfully') || textLower.includes('split this payment') || textLower.includes('upi ref no') || textLower.includes('order id')) scores.paytm += 6;
 
   let bestApp = 'unknown';
   let bestScore = 0;
@@ -520,42 +519,185 @@ export function extractBhimLayout(lines = [], fullText = '') {
 }
 
 /**
+ * SECTION 6B: PAYTM UPI LAYOUT PARSER (extractPaytmLayout)
  * ------------------------------------------------------------------------------
- * FUTURE INTEGRATION GUIDE: PAYTM UPI LAYOUT PARSER
- * ------------------------------------------------------------------------------
- * To add Paytm support in the future:
- * 1. Add 'paytm' keywords to `APP_KEYWORDS` at the top of this file.
- * 2. Implement `extractPaytmLayout(lines, fullText)` similar to the snippet below:
- *
- * export function extractPaytmLayout(lines = [], fullText = '') {
- *   const dt = parseDateTimeStrings(fullText);
- *   let amount = null;
- *   // Paytm usually shows "₹XXX.XX" near "Money Sent Successfully"
- *   for (const l of lines) {
- *     const amt = cleanAmountValue(l);
- *     if (amt && amt >= 10) { amount = amt; break; }
- *   }
- *   // UTR is labeled "UPI Ref No: XXXXXXXXXXXX"
- *   let utr = '';
- *   const utrMatch = fullText.match(/upi\s*ref\s*(?:no\.?)?\s*:?\s*(\d{12})/i);
- *   if (utrMatch) utr = utrMatch[1];
- *   return {
- *     amount,
- *     receiver: 'Paytm Merchant / Contact',
- *     receiver_upi: '',
- *     sender_upi: '',
- *     transaction_id: utr,
- *     utr,
- *     date: dt.date,
- *     time: dt.time,
- *     status: 'Completed',
- *     payment_mode: 'Paytm UPI',
- *   };
- * }
- * 3. In `processStatement()` below, add:
- *    `if (detectedApp.app === 'paytm') return extractPaytmLayout(lines, fullText);`
- * ------------------------------------------------------------------------------
+ * Paytm mobile receipts follow a structured multi-card layout:
+ * 1. Amount: Shown in prominent header card under "Amount" label (e.g. ₹2,300),
+ *    often accompanied by written words (e.g. "Rupees Two Thousand Three Hundred Only")
+ *    and action badges ("Split this Payment", "Add Tag").
+ * 2. Recipient: In the "To" card, directly following the "To" label, with UPI ID
+ *    labeled as "UPI ID: <handle>@paytm" or standard bank handle.
+ * 3. Sender: In the "From" card, showing sender name and debited bank account
+ *    (e.g., "HDFC Bank - 5240").
+ * 4. Transaction Identifiers:
+ *    - Order ID: Long numeric/alphanumeric reference (e.g. 202309241525070068).
+ *    - UPI Ref No (UTR): 12-digit numeric NPCI banking reference (e.g. 326721250950).
+ * 5. Date & Time: Format "Paid at HH:MM AM/PM, DD MMM YYYY".
+ * 6. Payment Mode: "Paytm UPI".
  */
+export function extractPaytmLayout(lines = [], fullText = '') {
+  const dt = parseDateTimeStrings(fullText);
+  let amount = null;
+
+  // 1. Amount Extraction:
+  // In Paytm, amount is directly following the 'Amount' header
+  const amountHeaderIdx = lines.findIndex((l) => /^amount$/i.test(l.trim()));
+  if (amountHeaderIdx !== -1) {
+    for (let i = amountHeaderIdx + 1; i <= Math.min(amountHeaderIdx + 3, lines.length - 1); i++) {
+      const amt = cleanAmountValue(lines[i]);
+      if (amt && amt >= 1) {
+        amount = amt;
+        break;
+      }
+    }
+  }
+
+  // Fallback: check lines near 'Paid Successfully' or 'Money Sent Successfully'
+  if (!amount) {
+    for (let i = 0; i < lines.length; i++) {
+      if (/paid successfully|money sent successfully|payment successful|bill payment/i.test(lines[i])) {
+        for (let j = i; j <= Math.min(i + 4, lines.length - 1); j++) {
+          const amt = cleanAmountValue(lines[j]);
+          if (amt && amt >= 1) {
+            amount = amt;
+            break;
+          }
+        }
+        if (amount) break;
+      }
+    }
+  }
+
+  // Fallback: scan all lines before bottom metadata
+  if (!amount) {
+    for (const l of lines) {
+      if (/upi ref no|order id|paid at/i.test(l)) break;
+      const amt = cleanAmountValue(l);
+      if (amt && amt >= 1) {
+        amount = amt;
+        break;
+      }
+    }
+  }
+
+  // 2. Recipient Name:
+  let receiver = '';
+  const toIdx = lines.findIndex((l) => /^to$/i.test(l.trim()));
+  if (toIdx !== -1 && lines[toIdx + 1]) {
+    const candidate = lines[toIdx + 1].trim();
+    if (!candidate.startsWith('UPI ID') && !candidate.includes('@') && candidate.length > 1) {
+      receiver = candidate.replace(/^[•·*+]+/, '').trim();
+    }
+  }
+
+  if (!receiver) {
+    const toColonMatch = fullText.match(/(?:To|Paid To)\s*:\s*([^\r\n]+)/i);
+    if (toColonMatch) {
+      const candidate = toColonMatch[1].trim();
+      if (!candidate.includes('@') && candidate.length > 1) {
+        receiver = candidate;
+      }
+    }
+  }
+
+  if (!receiver) {
+    const toLineMatch = lines.find((l) => /^(?:paid\s+to|to)\s+[a-zA-Z]/i.test(l) && !/@/.test(l));
+    if (toLineMatch) {
+      receiver = toLineMatch.replace(/^(?:paid\s+to|to)\s+/i, '').trim();
+    }
+  }
+
+  // 3. Recipient UPI ID:
+  let receiver_upi = '';
+  const upiIdLabelMatch = fullText.match(/UPI\s*ID\s*:\s*([a-zA-Z0-9.\-_]+@[a-zA-Z0-9.\-_]+)/i);
+  if (upiIdLabelMatch) {
+    receiver_upi = upiIdLabelMatch[1].trim();
+  } else {
+    const upiMatch = fullText.match(/([a-zA-Z0-9.\-_]{2,49}@paytm)/i) ||
+                     fullText.match(/([a-zA-Z0-9.\-_]{2,49}@[a-zA-Z]{2,})/i);
+    if (upiMatch) {
+      receiver_upi = upiMatch[1].replace(/^[•·*+]+/, '').trim();
+    }
+  }
+
+  // 4. Sender Name, Bank & Sender UPI ID:
+  let sender = '';
+  let bank = '';
+  let sender_upi = '';
+
+  const fromIdx = lines.findIndex((l) => /^from$/i.test(l.trim()));
+  if (fromIdx !== -1 && lines[fromIdx + 1]) {
+    const candidate = lines[fromIdx + 1].trim();
+    if (!candidate.includes('Bank') && !candidate.includes('@') && candidate.length > 1) {
+      sender = candidate;
+    }
+    if (lines[fromIdx + 2]) {
+      const bankCandidate = lines[fromIdx + 2].trim();
+      if (/bank/i.test(bankCandidate) || /-\s*\d{4}/.test(bankCandidate)) {
+        bank = bankCandidate.replace(/HOFC/i, 'HDFC').trim();
+      }
+    }
+  }
+
+  if (!sender) {
+    const fromColonMatch = fullText.match(/From\s*:\s*([^\r\n]+)/i);
+    if (fromColonMatch) {
+      sender = fromColonMatch[1].trim();
+    }
+  }
+
+  if (!bank) {
+    const bankMatch = fullText.match(/([a-zA-Z\s]+Bank\s*(?:-\s*\d{3,4})?)/i);
+    if (bankMatch) {
+      bank = bankMatch[1].replace(/HOFC/i, 'HDFC').trim();
+    }
+  }
+
+  // 5. UTR (UPI Ref No) & Order ID:
+  let utr = '';
+  let order_id = '';
+  let transaction_id = '';
+
+  const utrMatch = fullText.match(/UPI\s*Ref\s*(?:No\.?|ID|Num)?\s*:?\s*(\d{12})/i) ||
+                   fullText.match(/Ref\s*(?:No\.?|ID)\s*:?\s*(\d{12})/i) ||
+                   fullText.match(/\b\d{12}\b/);
+  if (utrMatch) {
+    utr = utrMatch[1] || utrMatch[0];
+  }
+
+  const orderIdMatch = fullText.match(/Order\s*ID\s*:?\s*([a-zA-Z0-9]+)/i);
+  if (orderIdMatch) {
+    order_id = orderIdMatch[1].trim();
+  }
+
+  // Standard 12-digit UTR is the primary transaction identifier for banking rails
+  transaction_id = utr || order_id || '';
+
+  // 6. Status:
+  let status = 'Completed';
+  if (/pending/i.test(fullText)) {
+    status = 'Pending';
+  } else if (/failed/i.test(fullText)) {
+    status = 'Failed';
+  }
+
+  return {
+    amount,
+    receiver: receiver || (receiver_upi ? receiver_upi.split('@')[0] : 'Paytm Merchant'),
+    receiver_upi,
+    sender,
+    sender_upi,
+    transaction_id,
+    utr,
+    order_id,
+    date: dt.date,
+    time: dt.time,
+    status,
+    remarks: order_id ? `Order ID: ${order_id}` : '',
+    payment_mode: 'Paytm UPI',
+    bank,
+  };
+}
 
 /**
  * SECTION 7: GENERAL / FALLBACK UPI LAYOUT PARSER (extractGeneralLayout)
@@ -792,6 +934,8 @@ export async function processImageOCR(imageFile, onProgress = null) {
       extracted = extractPhonePeLayout(lines, fullText);
     } else if (appInfo.app === 'googlepay') {
       extracted = extractGooglePayLayout(lines, fullText);
+    } else if (appInfo.app === 'paytm') {
+      extracted = extractPaytmLayout(lines, fullText);
     } else {
       extracted = extractGeneralLayout(lines, fullText);
     }
@@ -904,5 +1048,6 @@ export default {
   extractGooglePayLayout,
   extractPhonePeLayout,
   extractBhimLayout,
+  extractPaytmLayout,
   extractGeneralLayout,
 };
