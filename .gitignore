@@ -23,6 +23,8 @@ frontend/dist-ssr/
 .env.development.local
 .env.test.local
 .env.production.local
+supabase/functions/*/.env*
+.gravitas/
 !.env.example
 !frontend/.env.example
 

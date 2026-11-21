@@ -594,26 +594,87 @@ export function AppProvider({ children }) {
         dispatch({ type: 'SET_CURRENT_TRANSACTION', payload: res.transaction });
         dispatch({ type: 'SET_CURRENT_ANALYSIS', payload: res.analysis });
 
-        // Real application event: fraud analysis completed after confirmation/save.
-        addNotification({
-          title: 'Fraud analysis completed successfully',
-          message: `Analysis finished for ${res.transaction?.receiver || payload.receiver || 'transaction'} (Risk ${res.analysis?.score ?? 0}/100).`,
-          type: 'success',
-          event: 'analysis_completed',
-        });
+        const score = Number(res.analysis?.score ?? 0);
+        const tier = api.evaluateNotificationLevel(score);
 
-        // Real application event: suspicious activity detected when risk is elevated.
-        if ((res.analysis?.score ?? 0) >= 30 || (res.analysis?.level && res.analysis.level !== 'LOW')) {
+        // 1. Multi-channel Alert: In-App Notification
+        if (tier.level === 'LOW') {
           addNotification({
-            title: 'Suspicious transaction detected',
-            message: `${res.analysis?.level || 'Suspicious'} risk detected for ${res.transaction?.receiver || payload.receiver || 'this transaction'}.`,
-            type: (res.analysis?.score ?? 0) >= 60 ? 'warning' : 'info',
+            title: 'Transaction Confirmed — Low Risk',
+            message: `Assessed score ${score}/100. Activity is consistent with normal baseline.`,
+            type: 'success',
+            event: 'analysis_completed',
+          });
+        } else if (tier.level === 'WARNING') {
+          addNotification({
+            title: 'Warning: Moderate Risk Detected',
+            message: `Assessed score ${score}/100. Review payment details for ${res.transaction?.receiver || payload.receiver || 'recipient'}.`,
+            type: 'warning',
+            event: 'suspicious_detected',
+          });
+        } else if (tier.level === 'HIGH') {
+          addNotification({
+            title: 'High Risk Alert: Security Email Dispatched',
+            message: `Assessed score ${score}/100. Suspicious activity flagged and email alert sent.`,
+            type: 'warning',
+            event: 'suspicious_detected',
+          });
+        } else {
+          addNotification({
+            title: 'CRITICAL FRAUD ALERT: Priority Action Required',
+            message: `Assessed score ${score}/100. Critical fraud pattern detected. Priority email alert sent.`,
+            type: 'error',
             event: 'suspicious_detected',
           });
         }
 
+        // 2. Multi-channel Alert: Browser Notification API
+        api.sendBrowserNotification(`${tier.label}: ₹${res.transaction?.amount} to ${res.transaction?.receiver}`, {
+          body: tier.message,
+        });
+
+        // 3. Multi-channel Alert: Resend Email Notification (Only for HIGH >= 52 and CRITICAL >= 75)
+        let emailDelivery = null;
+        if (tier.sendEmail) {
+          try {
+            emailDelivery = await api.sendSuspiciousAlertEmail(res.transaction, res.analysis);
+            if (emailDelivery.sent) {
+              addNotification({
+                title: 'Security Alert Email Dispatched',
+                message: `Alert sent to ${emailDelivery.recipient} (${tier.level} Risk, Score ${score}/100).`,
+                type: 'success',
+                event: 'email_alert_sent',
+              });
+            } else if (emailDelivery.duplicate) {
+              addNotification({
+                title: 'Email Alert Deduplication',
+                message: `Duplicate prevention active: Alert for ${res.transaction?.transaction_id || res.transaction?.id} was previously sent.`,
+                type: 'info',
+                event: 'email_alert_duplicate',
+              });
+            } else if (emailDelivery.error) {
+              addNotification({
+                title: 'Email Alert Delivery Notice',
+                message: `Could not deliver email: ${emailDelivery.error}`,
+                type: 'error',
+                event: 'email_alert_failed',
+              });
+            }
+          } catch (emailErr) {
+            console.warn('[Email Alert Dispatch Error]:', emailErr);
+          }
+        }
+
+        // 4. Architectural Payload: Prepare Android Companion synchronizer data
+        const androidPayload = api.buildAndroidNotificationPayload(res.transaction, res.analysis, tier);
+
         await refreshData(state.currentMode);
-        return res;
+        return {
+          ...res,
+          notification_tier: tier,
+          email_delivery: emailDelivery,
+          android_companion_payload: androidPayload,
+        };
       }
       return { success: false, detail: 'Failed to confirm transaction insert.' };
     } catch (err) {

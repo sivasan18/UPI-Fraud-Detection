@@ -44,6 +44,15 @@ import { buildBehaviourProfile } from '../engine/behaviourProfile.js';
 import { processImageOCR, processStatement } from '../engine/ocrEngine.js';
 import { generateHistoricalTransactions } from './demoData.js';
 import { normalizeTransactionDate, normalizeTransactionTime } from '../utils/dateUtils.js';
+import { notificationService, DEFAULT_ADMIN_RECIPIENTS } from './notificationService.js';
+import {
+  evaluateNotificationLevel,
+  validateThresholds,
+  substituteTemplate,
+  generateEmailHtmlPreview,
+  buildAndroidNotificationPayload,
+  DEFAULT_THRESHOLDS,
+} from '../engine/notificationEngine.js';
 
 // Local in-memory fallback store if Supabase credentials are not yet configured in .env
 let localStore = {
@@ -748,6 +757,34 @@ export const api = {
 
     return { success: true, count: preparedTxns.length };
   },
+
+  // --------------------------------------------------------------------------
+  // 8. Risk Notifications, Multi-Channel Alerts & Email
+  // --------------------------------------------------------------------------
+  requestBrowserNotificationPermission: () => notificationService.requestBrowserNotificationPermission(),
+  getBrowserNotificationPermission: () => notificationService.getBrowserNotificationPermission(),
+  sendBrowserNotification: (title, opts) => notificationService.sendBrowserNotification(title, opts),
+  getRiskThresholds: () => notificationService.getRiskThresholds(),
+  updateRiskThresholds: (thresholds) => notificationService.updateRiskThresholds(thresholds),
+  getEmailTemplates: () => notificationService.getEmailTemplates(),
+  updateEmailTemplate: (id, template) => notificationService.updateEmailTemplate(id, template),
+  getAdminProfile: () => notificationService.getAdminProfile(),
+  updateAdminNotificationEmail: (email) => notificationService.updateAdminNotificationEmail(email),
+  getAdminEmailRecipients: () => notificationService.getAdminEmailRecipients(),
+  updateAdminEmailRecipients: (recipients) => notificationService.updateAdminEmailRecipients(recipients),
+  sendTestEmailToAdmin: (targetAdmin) => notificationService.sendTestEmailToAdmin(targetAdmin),
+  sendVerificationOtp: (adminUsername) => notificationService.sendVerificationOtp(adminUsername),
+  verifyOwnershipOtp: (adminUsername, otp) => notificationService.verifyOwnershipOtp(adminUsername, otp),
+  DEFAULT_ADMIN_RECIPIENTS,
+  sendSuspiciousAlertEmail: (txn, analysis) => notificationService.sendSuspiciousAlertEmail(txn, analysis),
+  getEmailDeliveryLogs: (limit) => notificationService.getEmailDeliveryLogs(limit),
+  retryEmailNotification: (id) => notificationService.retryEmailNotification(id),
+  validateThresholds,
+  evaluateNotificationLevel,
+  substituteTemplate,
+  generateEmailHtmlPreview,
+  buildAndroidNotificationPayload,
+  DEFAULT_THRESHOLDS,
 };
 
 export default api;
