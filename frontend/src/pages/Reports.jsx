@@ -18,9 +18,17 @@ export default function Reports() {
     avgRiskScore,
     behaviourProfile,
     transactions,
+    addNotification,
   } = useApp();
 
   const handlePrint = () => {
+    // Real application event: report generated (print/PDF view).
+    addNotification({
+      title: 'Transaction report generated',
+      message: `A ${currentMode} mode report was prepared for printing.`,
+      type: 'success',
+      event: 'report_generated',
+    });
     window.print();
   };
 
@@ -48,6 +56,14 @@ export default function Reports() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // Real application event: report generated/exported successfully.
+    addNotification({
+      title: 'Transaction report generated',
+      message: `CSV report exported successfully (${rows.length} records, ${currentMode} mode).`,
+      type: 'success',
+      event: 'report_generated',
+    });
   };
 
   return (

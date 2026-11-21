@@ -33,6 +33,78 @@ import { resolveEmailToUsername } from '../services/auth';
 
 const AppContext = createContext(null);
 
+// Helper: build a storage key for notifications so Active and Demo histories stay separate.
+const getNotificationStorageKey = (mode = 'ACTIVE') => `upi_notifications_${mode || 'ACTIVE'}`;
+
+// Helper: safely read saved notifications from localStorage.
+const loadStoredNotifications = (mode = 'ACTIVE') => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(getNotificationStorageKey(mode));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+// Helper: create clearly labeled sample notifications for Demo Mode only.
+const createDemoSampleNotifications = () => {
+  const now = Date.now();
+  return [
+    {
+      id: `demo-note-${now}-1`,
+      title: 'Fraud analysis completed successfully (Demo sample)',
+      message: 'A sample fraud analysis finished in Demo Mode.',
+      type: 'success',
+      event: 'analysis_completed',
+      read: false,
+      isDemoSample: true,
+      createdAt: new Date(now - 1000 * 60 * 12).toISOString(),
+    },
+    {
+      id: `demo-note-${now}-2`,
+      title: 'Transaction report generated (Demo sample)',
+      message: 'A sample transaction report was generated for demonstration.',
+      type: 'info',
+      event: 'report_generated',
+      read: false,
+      isDemoSample: true,
+      createdAt: new Date(now - 1000 * 60 * 9).toISOString(),
+    },
+    {
+      id: `demo-note-${now}-3`,
+      title: 'Suspicious transaction detected (Demo sample)',
+      message: 'A sample high-risk pattern was detected in Demo Mode data.',
+      type: 'warning',
+      event: 'suspicious_detected',
+      read: false,
+      isDemoSample: true,
+      createdAt: new Date(now - 1000 * 60 * 6).toISOString(),
+    },
+    {
+      id: `demo-note-${now}-4`,
+      title: 'Email alert sent successfully (Demo sample)',
+      message: 'Sample notification showing a successful email alert.',
+      type: 'success',
+      event: 'email_alert_sent',
+      read: true,
+      isDemoSample: true,
+      createdAt: new Date(now - 1000 * 60 * 4).toISOString(),
+    },
+    {
+      id: `demo-note-${now}-5`,
+      title: 'Email alert failed (Demo sample)',
+      message: 'Sample notification showing a failed email alert.',
+      type: 'error',
+      event: 'email_alert_failed',
+      read: true,
+      isDemoSample: true,
+      createdAt: new Date(now - 1000 * 60 * 2).toISOString(),
+    },
+  ];
+};
+
 const initialState = {
   isAuthenticated: false,
   sessionChecked: false,
@@ -65,6 +137,9 @@ const initialState = {
 
   // Alerts
   alerts: [],
+
+  // Notifications (real app events in Active Mode, clearly labeled samples in Demo Mode)
+  notifications: loadStoredNotifications((typeof window !== 'undefined' && localStorage.getItem('upi_current_mode')) || 'ACTIVE'),
 
   // Validated Feedback Samples (Adaptive Learning)
   validatedSamples: [],
@@ -111,6 +186,7 @@ function appReducer(state, action) {
         currentMode: 'ACTIVE',
         transactions: [],
         alerts: [],
+        notifications: loadStoredNotifications('ACTIVE'),
         validatedSamples: [],
         behaviourProfile: null,
         currentTransaction: null,
@@ -119,7 +195,11 @@ function appReducer(state, action) {
       };
 
     case 'SET_MODE':
-      return { ...state, currentMode: action.payload };
+      return {
+        ...state,
+        currentMode: action.payload,
+        notifications: action.notifications ?? loadStoredNotifications(action.payload),
+      };
 
     case 'SET_DEMO_MODE_ENABLED':
       return { ...state, demoModeEnabled: action.payload };
@@ -168,6 +248,18 @@ function appReducer(state, action) {
 
     case 'SET_ALERTS':
       return { ...state, alerts: action.payload };
+
+    case 'SET_NOTIFICATIONS':
+      return { ...state, notifications: action.payload || [] };
+
+    case 'ADD_NOTIFICATION':
+      return { ...state, notifications: [action.payload, ...(state.notifications || [])].slice(0, 50) };
+
+    case 'MARK_NOTIFICATIONS_READ':
+      return {
+        ...state,
+        notifications: (state.notifications || []).map((n) => ({ ...n, read: true })),
+      };
 
     case 'SET_VALIDATED_SAMPLES':
       return { ...state, validatedSamples: action.payload };
@@ -254,6 +346,51 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // Save notifications for the active mode so users can view previous notifications.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(getNotificationStorageKey(state.currentMode), JSON.stringify(state.notifications || []));
+    } catch {
+      // Ignore storage errors (private mode/quota) without breaking the app.
+    }
+  }, [state.notifications, state.currentMode]);
+
+  // Add a new notification event (real app event in Active Mode, labeled sample in Demo Mode when marked).
+  const addNotification = useCallback((notification) => {
+    const entry = {
+      id: notification.id || `note_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      title: notification.title || 'Notification',
+      message: notification.message || '',
+      type: notification.type || 'info', // info | success | warning | error
+      event: notification.event || 'general',
+      read: Boolean(notification.read),
+      isDemoSample: Boolean(notification.isDemoSample),
+      createdAt: notification.createdAt || new Date().toISOString(),
+    };
+    dispatch({ type: 'ADD_NOTIFICATION', payload: entry });
+    return entry;
+  }, []);
+
+  const markNotificationsRead = useCallback(() => {
+    dispatch({ type: 'MARK_NOTIFICATIONS_READ' });
+  }, []);
+
+  // Helper: ensure Demo Mode has clearly identified sample notifications for the panel.
+  const ensureDemoNotifications = useCallback(() => {
+    const existing = loadStoredNotifications('DEMO');
+    if (existing.length > 0) {
+      dispatch({ type: 'SET_NOTIFICATIONS', payload: existing });
+      return existing;
+    }
+    const seeded = createDemoSampleNotifications();
+    dispatch({ type: 'SET_NOTIFICATIONS', payload: seeded });
+    try {
+      localStorage.setItem(getNotificationStorageKey('DEMO'), JSON.stringify(seeded));
+    } catch {}
+    return seeded;
+  }, []);
+
   // Refresh all mode-isolated data from Supabase
   const refreshData = useCallback(async (mode = state.currentMode) => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -296,6 +433,16 @@ export function AppProvider({ children }) {
     }
   }, [state.currentMode, state.isAuthenticated, refreshData, checkDemoFlag]);
 
+  // Keep notification history in sync when the mode changes (and seed demo samples if needed).
+  useEffect(() => {
+    if (state.currentMode === 'DEMO') {
+      const existing = loadStoredNotifications('DEMO');
+      if (!existing.length) {
+        ensureDemoNotifications();
+      }
+    }
+  }, [state.currentMode, ensureDemoNotifications]);
+
   const authenticate = useCallback(async (username, password) => {
     const res = await api.login(username, password);
     dispatch({
@@ -323,7 +470,13 @@ export function AppProvider({ children }) {
         role: 'Administrator',
       },
     });
-    dispatch({ type: 'SET_MODE', payload: 'DEMO' });
+    // Seed clearly labeled demo notifications when needed.
+    const demoNotes = loadStoredNotifications('DEMO');
+    dispatch({
+      type: 'SET_MODE',
+      payload: 'DEMO',
+      notifications: demoNotes.length ? demoNotes : createDemoSampleNotifications(),
+    });
     try {
       localStorage.setItem('upi_current_mode', 'DEMO');
     } catch {}
@@ -360,9 +513,16 @@ export function AppProvider({ children }) {
     if (!res.success) {
       return false;
     }
-    dispatch({ type: 'SET_MODE', payload: targetMode });
+
+    // Load saved notifications for the target mode. Demo Mode gets clearly labeled samples if empty.
+    let nextNotifications = loadStoredNotifications(targetMode);
+    if (targetMode === 'DEMO' && nextNotifications.length === 0) {
+      nextNotifications = createDemoSampleNotifications();
+    }
+    dispatch({ type: 'SET_MODE', payload: targetMode, notifications: nextNotifications });
     try {
       localStorage.setItem('upi_current_mode', targetMode);
+      localStorage.setItem(getNotificationStorageKey(targetMode), JSON.stringify(nextNotifications));
     } catch {}
     if (targetMode === 'DEMO') {
       await api.seedDemoData();
@@ -433,6 +593,25 @@ export function AppProvider({ children }) {
       if (res && res.success) {
         dispatch({ type: 'SET_CURRENT_TRANSACTION', payload: res.transaction });
         dispatch({ type: 'SET_CURRENT_ANALYSIS', payload: res.analysis });
+
+        // Real application event: fraud analysis completed after confirmation/save.
+        addNotification({
+          title: 'Fraud analysis completed successfully',
+          message: `Analysis finished for ${res.transaction?.receiver || payload.receiver || 'transaction'} (Risk ${res.analysis?.score ?? 0}/100).`,
+          type: 'success',
+          event: 'analysis_completed',
+        });
+
+        // Real application event: suspicious activity detected when risk is elevated.
+        if ((res.analysis?.score ?? 0) >= 30 || (res.analysis?.level && res.analysis.level !== 'LOW')) {
+          addNotification({
+            title: 'Suspicious transaction detected',
+            message: `${res.analysis?.level || 'Suspicious'} risk detected for ${res.transaction?.receiver || payload.receiver || 'this transaction'}.`,
+            type: (res.analysis?.score ?? 0) >= 60 ? 'warning' : 'info',
+            event: 'suspicious_detected',
+          });
+        }
+
         await refreshData(state.currentMode);
         return res;
       }
@@ -444,7 +623,7 @@ export function AppProvider({ children }) {
         detail: err?.message || 'Could not save this transaction to the database.',
       };
     }
-  }, [state.currentMode, refreshData]);
+  }, [state.currentMode, refreshData, addNotification]);
 
   // Run Real-time Risk Analysis
   const runAnalysis = useCallback(async (transaction) => {
@@ -454,6 +633,25 @@ export function AppProvider({ children }) {
       if (res && res.analysis) {
         dispatch({ type: 'SET_CURRENT_ANALYSIS', payload: res.analysis });
         dispatch({ type: 'SET_CURRENT_TRANSACTION', payload: transaction });
+
+        // Real application event: fraud analysis completed.
+        addNotification({
+          title: 'Fraud analysis completed successfully',
+          message: `Analysis finished for ${transaction?.receiver || 'transaction'} (Risk ${res.analysis?.score ?? 0}/100).`,
+          type: 'success',
+          event: 'analysis_completed',
+        });
+
+        // Real application event: suspicious activity detected when risk is elevated.
+        if ((res.analysis?.score ?? 0) >= 30 || (res.analysis?.level && res.analysis.level !== 'LOW')) {
+          addNotification({
+            title: 'Suspicious transaction detected',
+            message: `${res.analysis?.level || 'Suspicious'} risk detected for ${transaction?.receiver || 'this transaction'}.`,
+            type: (res.analysis?.score ?? 0) >= 60 ? 'warning' : 'info',
+            event: 'suspicious_detected',
+          });
+        }
+
         return res.analysis;
       }
     } catch (err) {
@@ -461,7 +659,7 @@ export function AppProvider({ children }) {
       throw err;
     }
     return null;
-  }, [state.currentMode]);
+  }, [state.currentMode, addNotification]);
 
   // Review an alert
   const reviewAlert = useCallback(async (alertId) => {
@@ -533,6 +731,8 @@ export function AppProvider({ children }) {
     addValidatedSample,
     clearModeData,
     clearCurrent,
+    addNotification,
+    markNotificationsRead,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

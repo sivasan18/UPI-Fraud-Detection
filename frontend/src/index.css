@@ -941,3 +941,504 @@ a:hover { color: #ffffff; }
     padding: 1.5rem;
   }
 }
+
+/* ==============================================================================
+   Review 2: Notifications, Mobile Bottom Navigation, and Responsive Layout
+   - Keeps the existing black/yellow/white theme.
+   - Notification bell remains in the top-right header on desktop and mobile.
+   - Desktop keeps sidebar/header experience; mobile uses bottom navigation.
+   ============================================================================== */
+
+.topnav-logo-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topnav-logo-img {
+  width: 26px;
+  height: 26px;
+}
+
+.topnav-admin-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid var(--yellow-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-badge-name { color: #facc15; }
+.admin-badge-role { color: var(--text-muted); font-size: 0.7rem; }
+
+.topnav-demo-indicators {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.topnav-synthetic-badge {
+  font-size: 0.62rem;
+  padding: 3px 8px;
+}
+
+/* Notification bell and panel */
+.notification-wrapper {
+  position: relative;
+}
+
+.notification-bell-btn {
+  position: relative;
+  padding: 8px;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #facc15;
+  color: #000000;
+  font-size: 0.62rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(360px, calc(100vw - 1rem));
+  max-height: min(70vh, 460px);
+  background: var(--bg-card);
+  border: 1px solid var(--yellow-border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), var(--shadow-yellow);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.notification-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--yellow-border);
+  background: var(--bg-card-subtle);
+}
+
+.notification-panel-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.notification-panel-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.notification-list {
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.notification-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid rgba(250, 204, 21, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.notification-item.unread {
+  border-color: rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.06);
+}
+
+.notification-item-icon {
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.notification-item-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.notification-item-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.notification-item-message {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.notification-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.notification-demo-tag {
+  font-size: 0.62rem;
+  padding: 2px 6px;
+}
+
+.notification-empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--text-tertiary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+}
+
+/* Bottom navigation (mobile only by default hidden on desktop) */
+.bottom-nav {
+  display: none;
+}
+
+.bottomnav-more-overlay {
+  display: none;
+}
+
+/* General responsive safety: prevent page-level horizontal scrolling */
+.page-content,
+.card,
+.table-container {
+  max-width: 100%;
+}
+
+.table-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tablet and mobile adjustments */
+@media (max-width: 768px) {
+  /* Hide desktop sidebar and use bottom navigation instead */
+  .sidebar {
+    display: none !important;
+  }
+
+  .main-content,
+  .main-content.expanded-full {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Reserve space for fixed bottom navigation */
+  .page-content {
+    padding: 1rem 0.9rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .topnav {
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .topnav-left,
+  .topnav-right {
+    gap: 0.45rem;
+    min-width: 0;
+  }
+
+  .topnav-brand {
+    min-width: 0;
+  }
+
+  .topnav-title {
+    font-size: 0.92rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 34vw;
+  }
+
+  /* Keep bell in top-right; simplify crowded header items on small screens */
+  .topnav-menu-btn,
+  .topnav-signout-btn,
+  .topnav-demo-indicators .topnav-synthetic-badge {
+    display: none !important;
+  }
+
+  .topnav-admin-badge {
+    padding: 4px 8px;
+    font-size: 0.74rem;
+    max-width: 40vw;
+  }
+
+  .admin-badge-role {
+    display: none;
+  }
+
+  .admin-badge-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topnav-right {
+    flex-wrap: nowrap;
+  }
+
+  .notification-panel {
+    position: fixed;
+    top: calc(var(--topnav-height) + 0.5rem);
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    max-height: calc(100vh - var(--topnav-height) - 6.5rem);
+  }
+
+  /* Bottom navigation bar */
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 0.35rem 0.35rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+    background: rgba(12, 12, 12, 0.98);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--yellow-border);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.2rem;
+    z-index: 1100;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    min-height: 48px;
+    padding: 0.25rem 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .bottom-nav-item:hover,
+  .bottom-nav-item.active {
+    color: #000000;
+    background: var(--yellow-primary);
+  }
+
+  .bottom-nav-icon-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bottom-nav-badge {
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #facc15;
+    color: #000000;
+    font-size: 0.58rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #000000;
+  }
+
+  .bottom-nav-item.active .bottom-nav-badge {
+    background: #000000;
+    color: #facc15;
+    border-color: #facc15;
+  }
+
+  .bottom-nav-label {
+    line-height: 1.1;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bottomnav-more-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 1095;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0.75rem;
+  }
+
+  .bottomnav-more-sheet {
+    width: min(680px, 100%);
+    max-height: min(75vh, 560px);
+    overflow: auto;
+    background: var(--bg-secondary);
+    border: 1px solid var(--yellow-border);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), var(--shadow-yellow);
+    padding: 0.85rem;
+    margin-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bottomnav-more-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+
+  .bottomnav-more-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .bottomnav-more-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .bottomnav-more-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--yellow-border);
+    background: var(--bg-card);
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    min-height: 44px;
+    cursor: pointer;
+  }
+
+  .bottomnav-more-item:hover,
+  .bottomnav-more-item.active {
+    background: rgba(250, 204, 21, 0.12);
+    border-color: rgba(250, 204, 21, 0.45);
+  }
+
+  .bottomnav-more-item.signout-item {
+    border-color: rgba(250, 204, 21, 0.5);
+    color: #facc15;
+  }
+
+  .bottomnav-more-badge {
+    margin-left: auto;
+    font-size: 0.62rem;
+    padding: 2px 6px;
+  }
+
+  /* Prevent overlapping/cropping on smaller cards and headers */
+  .page-header h1 {
+    font-size: 1.35rem;
+    line-height: 1.25;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .grid-6 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .btn {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topnav-title {
+    max-width: 28vw;
+    font-size: 0.84rem;
+  }
+
+  .topnav-admin-badge .admin-badge-name {
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bottomnav-more-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header .flex,
+  .card-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+/* Tablet: keep desktop-like layout but ensure comfortable spacing */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .page-content {
+    padding: 1.25rem;
+  }
+
+  .topnav {
+    padding: 0 1rem;
+  }
+}

@@ -1,11 +1,12 @@
 // ==============================================================================
 // Fraud Detection and Risk Assessment System
-// Main Layout Shell with Sidebar Collapse / Full Width Toggle
+// Main Layout Shell with Sidebar (desktop) and Bottom Navigation (mobile)
 // ==============================================================================
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
+import BottomNav from './BottomNav';
 
 export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -16,6 +17,7 @@ export default function Layout() {
 
   return (
     <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* Desktop sidebar navigation (hidden on mobile by responsive CSS) */}
       <Sidebar
         isCollapsed={sidebarCollapsed}
         onClose={() => setSidebarCollapsed(true)}
@@ -26,6 +28,9 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile bottom navigation with main options and Sign Out */}
+      <BottomNav />
     </div>
   );
 }

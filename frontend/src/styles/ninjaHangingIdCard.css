@@ -763,7 +763,7 @@
 }
 
 /* Responsive Scaling for Small Displays */
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .hanging-screen {
     padding: 0 0.5rem 3rem;
   }
@@ -776,6 +776,24 @@
   .id-card {
     padding: 1.1rem 1.25rem 1.25rem;
     border-radius: 20px;
+  }
+
+  /* Prevent header overlap on mobile: place registration number below the ADMINISTRATOR title */
+  .id-card-header {
+    gap: 0.35rem;
+  }
+
+  .id-card-title {
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+
+  .id-card-reg-no {
+    position: static;
+    right: auto;
+    margin-top: 0.1rem;
+    align-self: center;
+    font-size: 0.76rem;
   }
 
   .ninja-photo-frame {
