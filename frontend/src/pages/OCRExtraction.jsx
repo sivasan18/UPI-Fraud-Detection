@@ -18,10 +18,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  CheckCircle, Edit3, Loader2, ArrowRight, FileCheck,
+  CheckCircle, Edit3, ArrowRight, FileCheck,
   AlertCircle, Sparkles, Smartphone, ShieldCheck, HelpCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import PulseRingLoader from '../components/common/PulseRingLoader';
 
 const APP_BADGES = {
   bhim: { name: 'BHIM UPI', color: '#facc15', bg: 'rgba(250, 204, 21, 0.12)', border: 'rgba(250, 204, 21, 0.35)' },
@@ -202,7 +203,7 @@ export default function OCRExtraction() {
 
           <div className="flex items-center gap-2">
             <div style={{ width: 26, height: 26, borderRadius: '50%', background: step >= 2 ? 'var(--yellow-primary)' : 'rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700 }}>
-              {step === 2 ? <Loader2 size={12} className="animate-spin" /> : '2'}
+              {step === 2 ? <PulseRingLoader variant="inline" size={14} /> : '2'}
             </div>
             <span className="text-xs text-secondary">App Detected</span>
           </div>

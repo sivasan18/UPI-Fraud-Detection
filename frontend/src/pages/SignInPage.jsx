@@ -22,6 +22,7 @@ import LanyardClip from '../components/auth/LanyardClip';
 import AdminEmblem from '../components/auth/AdminEmblem';
 import AdminAvatarFrame from '../components/auth/AdminAvatarFrame';
 import IdBarcode from '../components/auth/IdBarcode';
+import PulseRingLoader from '../components/common/PulseRingLoader';
 import '../styles/ninjaHangingIdCard.css';
 
 export default function SignInPage() {
@@ -245,19 +246,10 @@ export default function SignInPage() {
                 disabled={isSubmitting || !username.trim() || !password}
               >
                 {isSubmitting ? (
-                  <>
-                    <span
-                      style={{
-                        width: 16,
-                        height: 16,
-                        border: '2px solid #000000',
-                        borderTopColor: 'transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 0.6s linear infinite',
-                      }}
-                    />
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <PulseRingLoader variant="inline" size={18} />
                     <span>Verifying Access…</span>
-                  </>
+                  </span>
                 ) : (
                   <>
                     <span>SIGN IN</span>
@@ -429,9 +421,19 @@ export default function SignInPage() {
                     padding: '0.6rem 1.2rem',
                     borderRadius: 8,
                     cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
                   }}
                 >
-                  {isDemoVerifying ? 'Verifying...' : 'Verify & Launch Demo'}
+                  {isDemoVerifying ? (
+                    <>
+                      <PulseRingLoader variant="inline" size={16} />
+                      <span>Verifying & Launching Demo…</span>
+                    </>
+                  ) : (
+                    'Verify & Launch Demo'
+                  )}
                 </button>
               </div>
             </form>

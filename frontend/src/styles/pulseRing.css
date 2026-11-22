@@ -1,0 +1,234 @@
+/* ==============================================================================
+   Pulse Ring Loading Animation Stylesheet
+   Theme: STRICT BLACK + YELLOW + WHITE
+   ============================================================================== */
+
+/* Container Layouts */
+.pulse-ring-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+}
+
+/* Fullscreen Overlay Variant */
+.pulse-ring-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  min-height: 100vh;
+  width: 100vw;
+  animation: pulseFadeIn 0.25s ease-out forwards;
+}
+
+/* Section / Card Variant */
+.pulse-ring-section {
+  width: 100%;
+  min-height: 200px;
+  padding: 2.5rem 1rem;
+  background: transparent;
+  animation: pulseFadeIn 0.2s ease-out forwards;
+}
+
+/* Card Overlay Variant (positions over an existing container) */
+.pulse-ring-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(6, 6, 6, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: inherit;
+  animation: pulseFadeIn 0.2s ease-out forwards;
+}
+
+/* Inline / Button Variant */
+.pulse-ring-inline {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  vertical-align: middle;
+}
+
+/* The Animated Pulse Ring Stage */
+.pulse-ring-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Central Glowing Core */
+.pulse-ring-core {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #facc15;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.85);
+  animation: pulseCoreGlow 1.8s ease-in-out infinite;
+  z-index: 3;
+}
+
+/* Ring 1 — Expanding Primary Yellow Wave */
+.pulse-ring-wave-1 {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #facc15;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+  animation: pulseExpandWave1 1.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Ring 2 — Secondary Subtle White/Yellow Wave (Staggered Delay) */
+.pulse-ring-wave-2 {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
+  animation: pulseExpandWave2 1.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+  animation-delay: 0.55s;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Ring 3 — Subtle Ambient Outer Aura */
+.pulse-ring-wave-3 {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed rgba(250, 204, 21, 0.5);
+  animation: pulseExpandWave3 1.8s cubic-bezier(0.15, 0.5, 0.3, 1) infinite;
+  animation-delay: 1.05s;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Inline / Mini Size Adjustments */
+.pulse-ring-mini .pulse-ring-wave-1,
+.pulse-ring-mini .pulse-ring-wave-2,
+.pulse-ring-mini .pulse-ring-wave-3 {
+  border-width: 1.5px;
+}
+
+/* Typography & Labels */
+.pulse-ring-label-box {
+  margin-top: 1.25rem;
+  text-align: center;
+  max-width: 420px;
+}
+
+.pulse-ring-message {
+  color: #facc15;
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.3);
+}
+
+.pulse-ring-subtitle {
+  color: #a1a1a1;
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+  line-height: 1.4;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Keyframe Animations */
+@keyframes pulseExpandWave1 {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseExpandWave2 {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.75;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseExpandWave3 {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.6;
+  }
+  70% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(3.0);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseCoreGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.75);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 22px rgba(250, 204, 21, 0.95);
+  }
+}
+
+@keyframes pulseFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring-core,
+  .pulse-ring-wave-1,
+  .pulse-ring-wave-2,
+  .pulse-ring-wave-3 {
+    animation: none !important;
+    opacity: 0.8 !important;
+    transform: none !important;
+  }
+
+  .pulse-ring-wave-1 {
+    transform: scale(1.4) !important;
+    opacity: 0.5 !important;
+  }
+
+  .pulse-ring-wave-2 {
+    transform: scale(1.8) !important;
+    opacity: 0.3 !important;
+  }
+
+  .pulse-ring-wave-3 {
+    display: none !important;
+  }
+}

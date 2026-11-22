@@ -44,6 +44,7 @@ import AdaptiveLearning from './pages/AdaptiveLearning';
 import ModelMonitoring from './pages/ModelMonitoring';
 import Settings from './pages/Settings';
 import AboutProject from './pages/AboutProject';
+import PulseRingLoader from './components/common/PulseRingLoader';
 
 function App() {
   const { isAuthenticated, sessionChecked } = useApp();
@@ -52,34 +53,12 @@ function App() {
   // Prevents premature redirects while Supabase resolves the stored browser session
   if (!sessionChecked) {
     return (
-      <main
-        className="signin-screen"
-        aria-busy="true"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          backgroundColor: '#000000',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              border: '3px solid rgba(250, 204, 21, 0.15)',
-              borderTopColor: '#facc15',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-              margin: '0 auto 1rem',
-            }}
-          />
-          <p style={{ color: '#a3a3a3', fontSize: '0.85rem', fontFamily: 'monospace' }}>
-            Checking authentication session…
-          </p>
-        </div>
-      </main>
+      <PulseRingLoader
+        variant="fullscreen"
+        size="lg"
+        message="UPI FRAUD DETECTION & RISK ASSESSMENT SYSTEM"
+        subtitle="Verifying cryptographic administrator session…"
+      />
     );
   }
 

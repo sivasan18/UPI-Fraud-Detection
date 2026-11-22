@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import api from '../services/api';
+import PulseRingLoader from '../components/common/PulseRingLoader';
 
 export default function Settings() {
   const {
@@ -648,6 +649,14 @@ export default function Settings() {
             )}
 
             {/* Form for 4 Administrator Recipient Addresses */}
+            {recipientsLoading ? (
+              <PulseRingLoader
+                variant="section"
+                size="md"
+                message="Retrieving Administrator Recipient Mappings"
+                subtitle="Loading cryptographic system configuration from Supabase..."
+              />
+            ) : (
             <form onSubmit={handleSaveAllRecipients}>
               <div className="grid grid-2 gap-4 mb-5">
                 {/* Render Each Admin Account */}
@@ -747,11 +756,16 @@ export default function Settings() {
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                          style={{ fontSize: '0.72rem', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                           disabled={testingAdmin !== null}
                           onClick={() => handleSendTestEmail(adminKey)}
                         >
-                          {testingAdmin === adminKey ? 'Sending...' : 'Test Send'}
+                          {testingAdmin === adminKey ? (
+                            <>
+                              <PulseRingLoader variant="inline" size={12} />
+                              <span>Sending...</span>
+                            </>
+                          ) : 'Test Send'}
                         </button>
                       </div>
                     </div>
@@ -769,21 +783,34 @@ export default function Settings() {
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     disabled={testingAdmin !== null}
                     onClick={() => handleSendTestEmail('ALL')}
                   >
-                    {testingAdmin === 'ALL' ? 'Testing All 4...' : 'Test All 4 Recipients'}
+                    {testingAdmin === 'ALL' ? (
+                      <>
+                        <PulseRingLoader variant="inline" size={13} />
+                        <span>Testing All 4...</span>
+                      </>
+                    ) : 'Test All 4 Recipients'}
                   </button>
                   <button
                     type="submit"
                     className="btn btn-primary"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                     disabled={recipientsSaving}
                   >
-                    {recipientsSaving ? 'Saving Recipients...' : 'Save All Receiver Emails'}
+                    {recipientsSaving ? (
+                      <>
+                        <PulseRingLoader variant="inline" size={14} />
+                        <span>Saving Recipients...</span>
+                      </>
+                    ) : 'Save All Receiver Emails'}
                   </button>
                 </div>
               </div>
             </form>
+            )}
           </div>
 
           {/* Test Results Display Card */}
@@ -945,11 +972,16 @@ export default function Settings() {
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  style={{ fontSize: '0.75rem', color: otpCooldownSeconds > 0 ? '#666666' : 'var(--yellow-light)' }}
+                  style={{ fontSize: '0.75rem', color: otpCooldownSeconds > 0 ? '#666666' : 'var(--yellow-light)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                   disabled={otpCooldownSeconds > 0 || otpSending}
                   onClick={handleResendOtp}
                 >
-                  {otpCooldownSeconds > 0 ? `Resend code in ${otpCooldownSeconds}s` : 'Resend Code'}
+                  {otpSending ? (
+                    <>
+                      <PulseRingLoader variant="inline" size={12} />
+                      <span>Sending Code...</span>
+                    </>
+                  ) : otpCooldownSeconds > 0 ? `Resend code in ${otpCooldownSeconds}s` : 'Resend Code'}
                 </button>
 
                 <div className="flex gap-2">
@@ -963,9 +995,15 @@ export default function Settings() {
                   <button
                     type="submit"
                     className="btn btn-primary btn-sm"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     disabled={otpVerifying || otpCode.length !== 6 || otpExpiresSeconds <= 0}
                   >
-                    {otpVerifying ? 'Verifying...' : 'Verify Email Ownership'}
+                    {otpVerifying ? (
+                      <>
+                        <PulseRingLoader variant="inline" size={12} />
+                        <span>Verifying...</span>
+                      </>
+                    ) : 'Verify Email Ownership'}
                   </button>
                 </div>
               </div>
@@ -1112,10 +1150,16 @@ export default function Settings() {
               <button
                 type="button"
                 className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 disabled={thresholdsSaving || !thresholdValidation.isValid}
                 onClick={handleSaveThresholds}
               >
-                {thresholdsSaving ? 'Saving Thresholds...' : 'Save & Enforce Thresholds'}
+                {thresholdsSaving ? (
+                  <>
+                    <PulseRingLoader variant="inline" size={14} />
+                    <span>Saving Thresholds...</span>
+                  </>
+                ) : 'Save & Enforce Thresholds'}
               </button>
             </div>
           </div>
@@ -1257,8 +1301,18 @@ export default function Settings() {
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary" disabled={templateSaving}>
-                  {templateSaving ? 'Saving Template...' : `Save ${selectedTemplateLevel} Risk Template`}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  disabled={templateSaving}
+                >
+                  {templateSaving ? (
+                    <>
+                      <PulseRingLoader variant="inline" size={14} />
+                      <span>Saving Template...</span>
+                    </>
+                  ) : `Save ${selectedTemplateLevel} Risk Template`}
                 </button>
               </form>
 
@@ -1308,11 +1362,16 @@ export default function Settings() {
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 onClick={loadLogs}
                 disabled={logsLoading}
               >
-                <RefreshCcw size={14} className={logsLoading ? 'animate-spin' : ''} />
-                Refresh Logs
+                {logsLoading ? (
+                  <PulseRingLoader variant="inline" size={13} />
+                ) : (
+                  <RefreshCcw size={14} />
+                )}
+                <span>Refresh Logs</span>
               </button>
             </div>
 
@@ -1457,8 +1516,18 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              <button className="btn btn-primary" type="submit" disabled={isChangingPassword}>
-                {isChangingPassword ? 'Changing password…' : 'Change password'}
+              <button
+                className="btn btn-primary"
+                type="submit"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                disabled={isChangingPassword}
+              >
+                {isChangingPassword ? (
+                  <>
+                    <PulseRingLoader variant="inline" size={14} />
+                    <span>Changing password…</span>
+                  </>
+                ) : 'Change password'}
               </button>
             </form>
           </div>
@@ -1638,10 +1707,16 @@ export default function Settings() {
               </button>
               <button
                 className="btn btn-danger"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 disabled={isClearing}
                 onClick={handleConfirmClear}
               >
-                {isClearing ? 'Clearing Data...' : `Clear ${clearTargetMode} Data`}
+                {isClearing ? (
+                  <>
+                    <PulseRingLoader variant="inline" size={14} />
+                    <span>Clearing Data...</span>
+                  </>
+                ) : `Clear ${clearTargetMode} Data`}
               </button>
             </div>
           </div>
@@ -1697,8 +1772,18 @@ export default function Settings() {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowRemoveDemo(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-danger" disabled={isRemoving || !removePassword}>
-                  {isRemoving ? 'Removing...' : 'Remove Demo Mode Permanently'}
+                <button
+                  type="submit"
+                  className="btn btn-danger"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  disabled={isRemoving || !removePassword}
+                >
+                  {isRemoving ? (
+                    <>
+                      <PulseRingLoader variant="inline" size={14} />
+                      <span>Removing...</span>
+                    </>
+                  ) : 'Remove Demo Mode Permanently'}
                 </button>
               </div>
             </form>
@@ -1744,8 +1829,18 @@ export default function Settings() {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowEnableDemo(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={isEnabling || !enablePassword}>
-                  {isEnabling ? 'Enabling...' : 'Enable Demo Mode'}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  disabled={isEnabling || !enablePassword}
+                >
+                  {isEnabling ? (
+                    <>
+                      <PulseRingLoader variant="inline" size={14} />
+                      <span>Enabling...</span>
+                    </>
+                  ) : 'Enable Demo Mode'}
                 </button>
               </div>
             </form>

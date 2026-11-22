@@ -16,11 +16,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, Loader2, CheckCircle2, Play, AlertCircle, ArrowRight,
+  Search, CheckCircle2, Play, AlertCircle, ArrowRight,
   ShieldCheck, History, X, AlertTriangle, ShieldAlert, Lock, Info,
   RotateCcw, ExternalLink
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import PulseRingLoader from '../components/common/PulseRingLoader';
 
 const ANALYSIS_PIPELINE = [
   'Extracting transaction attributes (amount, timestamp, counterparty)',
@@ -512,7 +513,7 @@ export default function AnalyseTransaction() {
         ) : (
           <div className="p-6" style={{ background: 'var(--bg-card-subtle)', borderRadius: 12, border: '1px solid var(--yellow-border)' }}>
             <div className="flex items-center gap-3 mb-4 text-pink font-semibold">
-              <Loader2 className="animate-spin" size={20} />
+              <PulseRingLoader variant="inline" size={24} />
               <span>Executing AI Risk & 13-Pattern XAI Evaluation Pipeline...</span>
             </div>
 
@@ -527,7 +528,7 @@ export default function AnalyseTransaction() {
                       background: isDone ? 'var(--risk-low)' : isCurrent ? 'var(--yellow-primary)' : 'rgba(255, 255, 255, 0.1)',
                       color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', flexShrink: 0
                     }}>
-                      {isDone ? <CheckCircle2 size={12} /> : isCurrent ? <Loader2 size={10} className="animate-spin" /> : idx + 1}
+                      {isDone ? <CheckCircle2 size={12} /> : isCurrent ? <PulseRingLoader variant="inline" size={14} /> : idx + 1}
                     </div>
                     <span className={isCurrent ? 'font-semibold text-pink' : isDone ? 'text-secondary' : 'text-tertiary'}>
                       {stepText}

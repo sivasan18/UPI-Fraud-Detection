@@ -4,9 +4,10 @@
 // ==============================================================================
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, Image as ImageIcon, PlusCircle, ShieldAlert, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
+import { Upload, FileText, Image as ImageIcon, PlusCircle, ShieldAlert, CheckCircle, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import api from '../services/api';
+import PulseRingLoader from '../components/common/PulseRingLoader';
 
 export default function UploadTransaction() {
   const navigate = useNavigate();
@@ -231,15 +232,26 @@ export default function UploadTransaction() {
             onDrop={handleDrop}
           >
             <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleFileInput} />
-            <div className="upload-icon">
-              {isUploading ? <Loader2 className="animate-spin" size={28} /> : <Upload size={28} />}
-            </div>
-            <div className="upload-text">
-              {selectedFile ? selectedFile.name : 'Drag & drop UPI payment screenshot here, or click to browse'}
-            </div>
-            <div className="upload-hint">
-              Supports Google Pay, PhonePe, Paytm, BHIM and standard banking UPI receipts
-            </div>
+            {isUploading ? (
+              <PulseRingLoader
+                variant="section"
+                size="md"
+                message="Processing UPI Payment Screenshot…"
+                subtitle="Tesseract.js WASM OCR extracting layout, amount, UTR & counterparty details…"
+              />
+            ) : (
+              <>
+                <div className="upload-icon">
+                  <Upload size={28} />
+                </div>
+                <div className="upload-text">
+                  {selectedFile ? selectedFile.name : 'Drag & drop UPI payment screenshot here, or click to browse'}
+                </div>
+                <div className="upload-hint">
+                  Supports Google Pay, PhonePe, Paytm, BHIM and standard banking UPI receipts
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex justify-between items-center mt-6 flex-wrap gap-3">
@@ -264,15 +276,26 @@ export default function UploadTransaction() {
             onDrop={handleDrop}
           >
             <input type="file" accept=".pdf, .csv, .xlsx" onChange={handleFileInput} />
-            <div className="upload-icon">
-              {isUploading ? <Loader2 className="animate-spin" size={28} /> : <FileText size={28} />}
-            </div>
-            <div className="upload-text">
-              {selectedFile ? selectedFile.name : 'Drag & drop transaction passbook statement file here'}
-            </div>
-            <div className="upload-hint">
-              Review extracted rows before saving transaction details
-            </div>
+            {isUploading ? (
+              <PulseRingLoader
+                variant="section"
+                size="md"
+                message="Parsing Transaction Statement…"
+                subtitle="Reading statement rows & validating tabular structure…"
+              />
+            ) : (
+              <>
+                <div className="upload-icon">
+                  <FileText size={28} />
+                </div>
+                <div className="upload-text">
+                  {selectedFile ? selectedFile.name : 'Drag & drop transaction passbook statement file here'}
+                </div>
+                <div className="upload-hint">
+                  Review extracted rows before saving transaction details
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex justify-between items-center mt-6 flex-wrap gap-3">
@@ -349,7 +372,14 @@ export default function UploadTransaction() {
               disabled={!statementVerified || isUploading}
               onClick={saveVerifiedStatement}
             >
-              {isUploading ? 'Saving…' : 'Save verified rows'}
+              {isUploading ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <PulseRingLoader variant="inline" size={16} />
+                  <span>Saving verified rows…</span>
+                </span>
+              ) : (
+                'Save verified rows'
+              )}
             </button>
           </div>
         </div>

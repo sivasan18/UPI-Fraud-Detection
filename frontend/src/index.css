@@ -17,6 +17,8 @@
       - `.badge-low`, `.badge-medium`, `.badge-high`, `.badge-critical`.
    ============================================================================== */
 
+@import './styles/pulseRing.css';
+
 :root {
   /* Core Fixed Black + Yellow + White Palette */
   --bg-primary: #060606;

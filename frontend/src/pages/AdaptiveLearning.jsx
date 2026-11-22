@@ -4,10 +4,11 @@
 // ==============================================================================
 import React, { useState } from 'react';
 import {
-  Brain, CheckCircle, RefreshCw, PlusCircle, Loader2
+  Brain, CheckCircle, RefreshCw, PlusCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import api from '../services/api';
+import PulseRingLoader from '../components/common/PulseRingLoader';
 
 export default function AdaptiveLearning() {
   const { currentMode, databaseBackend, validatedSamples, addValidatedSample, refreshData, transactions } = useApp();
@@ -104,7 +105,7 @@ export default function AdaptiveLearning() {
             onClick={handleRetrain}
             disabled={currentMode !== 'DEMO' || isRetraining || validatedSamples.length === 0}
           >
-            {isRetraining ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
+            {isRetraining ? <PulseRingLoader variant="inline" size={16} /> : <RefreshCw size={16} />}
             {isRetraining ? 'Refreshing Demo Metrics...' : currentMode === 'DEMO' ? 'Refresh Demo Metrics' : 'Rule Engine — No Model Training'}
           </button>
         </div>
