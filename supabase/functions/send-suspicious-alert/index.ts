@@ -34,15 +34,48 @@ const corsHeaders = {
 
 const OTP_SALT = 'upi_fraud_shield_otp_salt_v3';
 
+export type AdminUsername = 'USER1' | 'USER2' | 'USER3' | 'USER4';
+
+export interface AdminRecipient {
+  username: AdminUsername;
+  name: string;
+  email: string;
+  uuid: string;
+  verified: boolean;
+  verified_at: string | null;
+}
+
+export interface AdminRecipientsMap {
+  USER1: AdminRecipient;
+  USER2: AdminRecipient;
+  USER3: AdminRecipient;
+  USER4: AdminRecipient;
+  [key: string]: AdminRecipient;
+}
+
+export interface AdminOtpRecord {
+  admin_username?: string;
+  admin?: string;
+  email: string;
+  otp_hash: string;
+  expires_at: string;
+  attempts: number;
+  max_attempts: number;
+  resend_available_at: string;
+  created_at?: string;
+}
+
+export type AdminOtpStore = Record<string, AdminOtpRecord>;
+
 // Default four admin accounts fallback mapping
-const DEFAULT_RECIPIENTS = {
+const DEFAULT_RECIPIENTS: AdminRecipientsMap = {
   USER1: { username: 'USER1', name: 'Gopika', email: 'sivar75@gmail.com', uuid: '15c5209b-cc1a-4510-b6a3-69268fa692b6', verified: true, verified_at: '2026-11-21T21:10:00.000Z' },
   USER2: { username: 'USER2', name: 'Padmashri', email: 'sanvjf@gmail.com', uuid: 'cc9ea8a3-c449-4b15-ae9a-e9b866e87152', verified: false, verified_at: null },
   USER3: { username: 'USER3', name: 'Megala', email: 'ramanid97@gmail.com', uuid: '81ce3767-f86d-49c5-a5d8-6519399d01bc', verified: false, verified_at: null },
   USER4: { username: 'USER4', name: 'Subasri', email: 'kannadhasan815@gmail.com', uuid: '3dbbac56-66de-4b7c-baa9-b6f8f3ad4105', verified: false, verified_at: null },
 };
 
-function resolveUsernameFromEmail(email: string = ''): string {
+function resolveUsernameFromEmail(email: string = ''): AdminUsername {
   const lower = email.trim().toLowerCase();
   if (lower.startsWith('user1')) return 'USER1';
   if (lower.startsWith('user2')) return 'USER2';
@@ -184,6 +217,8 @@ function generateEmailHtml({
               </div>
 
               <div style="background-color: #111111; border: 1px solid #222222; border-radius: 8px; padding: 16px; margin-bottom: 24px; font-size: 13px; color: #cccccc; white-space: pre-line;">
+                <div style="font-weight: 700; color: #facc15; margin-bottom: 6px;">Analysis Summary:</div>
+                <div style="margin-bottom: 12px; color: #ffffff;">${analysisSummary || 'Behavioral anomaly detected by 13-pattern XAI engine.'}</div>
                 ${body}
               </div>
 
@@ -281,7 +316,7 @@ function generateOtpHtml({
   `.trim();
 }
 
-serve(async (req) => {
+serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -327,7 +362,7 @@ serve(async (req) => {
     const callingUsername = resolveUsernameFromEmail(user.email);
 
     // Fetch 4 Configured Admin Email Recipients from `public.system_config`
-    let configuredRecipients = { ...DEFAULT_RECIPIENTS };
+    let configuredRecipients: AdminRecipientsMap = { ...DEFAULT_RECIPIENTS };
     try {
       const { data: configData, error: configErr } = await supabaseClient
         .from('system_config')
@@ -375,7 +410,7 @@ serve(async (req) => {
       }
 
       // Read active OTP store from system_config
-      let otpStore: Record<string, any> = {};
+      let otpStore: AdminOtpStore = {};
       try {
         const { data: storeData } = await supabaseClient
           .from('system_config')
@@ -385,7 +420,9 @@ serve(async (req) => {
         if (storeData?.value) {
           otpStore = typeof storeData.value === 'string' ? JSON.parse(storeData.value) : storeData.value;
         }
-      } catch (_) {}
+      } catch (_storeErr) {
+        // Fallback to empty store if system_config read is unavailable
+      }
 
       const existingRecord = otpStore[callingUsername];
       const now = Date.now();
@@ -472,9 +509,9 @@ serve(async (req) => {
           deliveryStatus = 'restricted_by_sender_domain';
           deliveryNotice = resendResult.message || `Resend rejected (HTTP ${resendResponse.status}). Note: onboarding@resend.dev is restricted to the account owner (sivar75@gmail.com). Custom domain verification is required for external delivery.`;
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         deliveryStatus = 'failed';
-        deliveryNotice = err.message || 'Network error communicating with Resend.';
+        deliveryNotice = err instanceof Error ? err.message : 'Network error communicating with Resend.';
       }
 
       return new Response(
@@ -521,7 +558,7 @@ serve(async (req) => {
       }
 
       // Fetch stored OTP record
-      let otpStore: Record<string, any> = {};
+      let otpStore: AdminOtpStore = {};
       try {
         const { data: storeData } = await supabaseClient
           .from('system_config')
@@ -531,7 +568,9 @@ serve(async (req) => {
         if (storeData?.value) {
           otpStore = typeof storeData.value === 'string' ? JSON.parse(storeData.value) : storeData.value;
         }
-      } catch (_) {}
+      } catch (_storeErr) {
+        // Fallback to empty store if system_config read is unavailable
+      }
 
       const record = otpStore[callingUsername];
       const now = Date.now();
@@ -662,7 +701,7 @@ serve(async (req) => {
           verified: true,
           admin: callingUsername,
           email: record.email,
-          verified_at: configuredRecipients[callingUsername].verified_at,
+          verified_at: configuredRecipients[callingUsername]?.verified_at ?? null,
           message: `Email ownership for ${record.email} has been successfully verified! High and critical alerts for ${callingUsername} are now authorized for dispatch.`,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -673,7 +712,7 @@ serve(async (req) => {
     // WORKFLOW 3: Admin-Only Test Email Feature (`is_test: true`)
     // ==========================================================================
     if (payload.is_test) {
-      const targetAdmin = payload.target_admin || 'USER1';
+      const targetAdmin = String(payload.target_admin || 'USER1');
       const targets = targetAdmin === 'ALL'
         ? Object.values(configuredRecipients)
         : [configuredRecipients[targetAdmin] || configuredRecipients.USER1];
@@ -746,13 +785,13 @@ serve(async (req) => {
               reason: resendResult.message || `Resend rejected (HTTP ${resendResponse.status})`,
             });
           }
-        } catch (dispatchErr: any) {
+        } catch (dispatchErr: unknown) {
           results.push({
             admin: target.username,
             name: target.name,
             email: target.email,
             status: 'failed',
-            reason: dispatchErr.message || 'Network error communicating with Resend',
+            reason: dispatchErr instanceof Error ? dispatchErr.message : 'Network error communicating with Resend',
           });
         }
       }
@@ -840,7 +879,9 @@ serve(async (req) => {
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } catch (_) {}
+    } catch (_dupErr) {
+      // Continue to send if duplicate check table is temporarily unreachable
+    }
 
     const emailHtml = generateEmailHtml({
       heading: scoreNum >= 75 ? 'Critical Risk Transaction Alert' : 'High Risk Transaction Alert',
@@ -855,7 +896,7 @@ serve(async (req) => {
       riskScore: scoreNum,
       riskLevel: risk_level,
       detectedPatterns: Array.isArray(detected_patterns) ? detected_patterns : [String(detected_patterns)],
-      analysisSummary,
+      analysisSummary: analysis_summary || 'Behavioral anomaly detected.',
       footerText: 'This is an automated security alert from the UPI Fraud Detection and Risk Assessment System.',
     });
 
@@ -893,7 +934,9 @@ serve(async (req) => {
           },
           { onConflict: 'transaction_id,risk_level' }
         );
-      } catch (_) {}
+      } catch (_failedLogErr) {
+        // Non-blocking log failure
+      }
 
       return new Response(
         JSON.stringify({
@@ -923,7 +966,9 @@ serve(async (req) => {
         },
         { onConflict: 'transaction_id,risk_level' }
       );
-    } catch (_) {}
+    } catch (_sentLogErr) {
+      // Non-blocking log failure
+    }
 
     return new Response(
       JSON.stringify({
@@ -938,10 +983,11 @@ serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (err: any) {
-    console.error('[send-suspicious-alert] Unhandled error:', err);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown internal error';
+    console.error('[send-suspicious-alert] Unhandled error:', errorMessage);
     return new Response(
-      JSON.stringify({ error: `Internal error: ${err.message || 'Unknown error'}` }),
+      JSON.stringify({ error: `Internal error: ${errorMessage}` }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
